@@ -1,0 +1,8 @@
+Evidencias/
+evidencias/
+__pycache__/
+*.pyc
+.DS_Store
+debug_screen.png
+test.png
+*.pdf
