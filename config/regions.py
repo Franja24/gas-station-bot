@@ -1,0 +1,29 @@
+PHONE_KEYPAD_REGION = (450, 230, 380, 260)
+LOGIN_KEYPAD_REGION = (450, 325, 380, 180)
+
+REGIONS = {
+    "premium.png": (690, 150, 140, 80),
+    "amount_1250.png": (680, 230, 150, 150),
+    "continue_button.png": (680, 490, 180, 80),
+    "benefits_telefon_number_button.png": (450, 300, 380, 200),
+    "one_button.png": PHONE_KEYPAD_REGION,
+    "two_button.png": PHONE_KEYPAD_REGION,
+    "three_button.png": PHONE_KEYPAD_REGION,
+    "four_button.png": PHONE_KEYPAD_REGION,
+    "five_button.png": PHONE_KEYPAD_REGION,
+    "six_button.png": PHONE_KEYPAD_REGION,
+    "seven_button.png": PHONE_KEYPAD_REGION,
+    "eight_button.png": PHONE_KEYPAD_REGION,
+    "nine_button.png": PHONE_KEYPAD_REGION,
+    "zero_button.png": PHONE_KEYPAD_REGION,
+    "login_one_button.png": LOGIN_KEYPAD_REGION,
+    "login_two_button.png": LOGIN_KEYPAD_REGION,
+    "login_three_button.png": LOGIN_KEYPAD_REGION,
+    "login_four_button.png": LOGIN_KEYPAD_REGION,
+    "login_five_button.png": LOGIN_KEYPAD_REGION,
+    "login_six_button.png": LOGIN_KEYPAD_REGION,
+    "login_seven_button.png": LOGIN_KEYPAD_REGION,
+    "login_eight_button.png": LOGIN_KEYPAD_REGION,
+    "login_nine_button.png": LOGIN_KEYPAD_REGION,
+    "login_zero_button.png": LOGIN_KEYPAD_REGION,
+}

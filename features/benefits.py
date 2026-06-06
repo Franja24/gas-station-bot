@@ -1,9 +1,8 @@
 import time
-import pyautogui
 from features.applications import open_anydesk
 
 from clicker import click_image
-from screenshot import save_screenshot, generate_pdf_report
+from screenshot import save_screenshot
 
 
 
@@ -15,7 +14,7 @@ def run():
     time.sleep(3)
 
 
-    click_image("premium.png", confidence=0.35, timeout=10)
+    click_image("premium.png", timeout=10)
 
     time.sleep(2)
 
@@ -23,7 +22,7 @@ def run():
 
     #STEP 2 - 500
 
-    click_image("amount_1250.png", confidence=0.35, timeout=10)
+    click_image("amount_1250.png", timeout=10)
 
     time.sleep(2)
 
@@ -31,7 +30,7 @@ def run():
 
     # STEP 3 - CONTINUE
 
-    click_image("continue_button.png", confidence=0.25, timeout=10)
+    click_image("continue_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -39,7 +38,7 @@ def run():
 
     # STEP 4 - BENEFITS
 
-    click_image("benefits_telefon_number_button.png", confidence=0.25, timeout=10)
+    click_image("benefits_telefon_number_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -63,17 +62,13 @@ def run():
     }
 
     for digit in PHONE_NUMBER:
-        click_image(
-            DIGITS[digit],
-            confidence=0.25,
-            timeout=10
-        )
+        click_image(DIGITS[digit], timeout=10)
 
         time.sleep(2)
 
     save_screenshot("step_5_benefits_number_clicked")
 
-    click_image("continue_button.png", confidence=0.35, timeout=10)
+    click_image("continue_button.png", timeout=10)
 
     time.sleep(4)
 
@@ -83,11 +78,8 @@ def run():
 
 
 
-    click_image("continue_button.png", confidence=0.35, timeout=10)
+    click_image("continue_button.png", timeout=10)
 
     time.sleep(2)
 
     save_screenshot("step_6_continue_final_clicked")
-
-    generate_pdf_report()
-

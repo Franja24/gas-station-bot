@@ -1,226 +1,130 @@
 import time
-import pyautogui
 
+import pyautogui
 from pynput.mouse import Button, Controller
+
+from config.coordinates import COORDINATES
+from config.login_keyboard import LOGIN_KEYBOARD_COORDINATES
+from config.phone_keyboard import PHONE_KEYBOARD_COORDINATES
+from config.regions import REGIONS
+from config.rfc_keyboard import RFC_KEYBOARD_COORDINATES
+from config.settings import (
+    CLICK_HOLD_SECONDS,
+    CLICK_MOVE_DURATION,
+    REFERENCE_SCREEN_SIZE,
+    SCREENSHOT_TO_MOUSE_SCALE,
+)
 from detector import find_image
+
 
 mouse = Controller()
 
-SCALE = 0.5
-
-
-# COORDENADAS CALIBRADAS
-
-COORDS = {
-    "start.png": (700, 520),
-
-    "login_button.png": (680, 535),
-
-    "entry_button.png": (650, 500),
-
-    "activate_unit.png": (680,530),
-
-    "amount_500_premium.png": (835, 360),
-
-    "no_benefits_button.png": (650, 450),
-
-    "continue_button.png": (800, 530),
-
-    "card.png": (650, 420),
-
-    "print.png": (700, 460),
-
-    "invoice.png": (800, 340),
-
-    "benefits_telefon_number_button.png": (700, 385)
-
-
-}
-
-#TECLADO LOGIN
-KEYPAD_LOGIN = {
-
-    # FILA NÚMEROS login
-    "login_one_button.png":   (490, 350),
-    "login_two_button.png":   (520, 350),
-    "login_three_button.png": (550, 350),
-    "login_four_button.png":  (590, 350),
-    "login_five_button.png":  (615, 350),
-    "login_six_button.png":   (650, 350),
-    "login_seven_button.png": (690, 350),
-    "login_eight_button.png": (720, 350),
-    "login_nine_button.png":  (750, 350),
-    "login_zero_button.png":  (790, 350),
-
-}
-
-# TECLADO NUMÉRICO
-
-KEYPAD_COORDS = {
-
-    # FILA 1
-    "one_button.png": (520, 260),
-    "two_button.png": (650, 260),
-    "three_button.png": (780, 260),
-
-    # FILA 2
-    "four_button.png": (520, 340),
-    "five_button.png": (650, 340),
-    "six_button.png": (780, 340),
-
-    # FILA 3
-    "seven_button.png": (520, 400),
-    "eight_button.png": (650, 400),
-    "nine_button.png": (780, 400),
-
-    # FILA 4
-    "zero_button.png": (650, 460),
-}
-
-RFC_KEYBOARD_COORDS = {
-    "rfc_one.png": (490, 260),
-    "rfc_zero.png": (780, 260),
-    "rfc_a.png": (490, 380),
-    "rfc_x.png": (560, 420),
-}
-
-COORDS.update(KEYPAD_COORDS)
-COORDS.update(RFC_KEYBOARD_COORDS)
-COORDS.update(KEYPAD_LOGIN)
-
-
-# REGIONES DE BÚSQUEDA
-
-KEYPAD_REGION = (1000, 500, 700, 600)
-KEYPAD_LOGIN =  (100, 500, 700, 600)
-
-REGIONS = {
-    "premium.png": (900, 300, 600, 400),
-
-    "amount_1250.png": (900, 300, 700, 500),
-
-    "continue_button.png": (900, 550, 800, 450),
-
-    "benefits_telefon_number_button.png": (900, 300, 600, 400),
-
-    "one_button.png": KEYPAD_REGION,
-    "two_button.png": KEYPAD_REGION,
-    "three_button.png": KEYPAD_REGION,
-    "four_button.png": KEYPAD_REGION,
-    "five_button.png": KEYPAD_REGION,
-    "six_button.png": KEYPAD_REGION,
-    "seven_button.png": KEYPAD_REGION,
-    "eight_button.png": KEYPAD_REGION,
-    "nine_button.png": KEYPAD_REGION,
-    "zero_button.png": KEYPAD_REGION,
-
-    "login_one_button": KEYPAD_LOGIN,
-    "login_two_button": KEYPAD_LOGIN,
-    "login_three_button": KEYPAD_LOGIN,
-    "login_four_button": KEYPAD_LOGIN,
-    "login_five_button": KEYPAD_LOGIN,
-    "login_six_button": KEYPAD_LOGIN
+CALIBRATED_COORDINATES = {
+    **COORDINATES,
+    **LOGIN_KEYBOARD_COORDINATES,
+    **PHONE_KEYBOARD_COORDINATES,
+    **RFC_KEYBOARD_COORDINATES,
 }
 
 
-# AJUSTES ESPECIALES
-
-SPECIAL_SCALE = {
-    "amount_1250.png": (0.62, 0.55),
-
-    "continue_button.png": (0.72, 0.90)
-}
+class ClickError(RuntimeError):
+    pass
 
 
-def click_image(image_name, confidence=0.45, timeout=10):
+def _validate_calibration():
+    current_size = tuple(pyautogui.size())
+
+    if current_size != REFERENCE_SCREEN_SIZE:
+        raise ClickError(
+            "Las coordenadas fueron calibradas para una pantalla de "
+            f"{REFERENCE_SCREEN_SIZE[0]}x{REFERENCE_SCREEN_SIZE[1]}, pero la "
+            f"pantalla actual es {current_size[0]}x{current_size[1]}. "
+            "Se canceló el clic para evitar un falso positivo."
+        )
+
+
+def click_image(image_name, confidence=0.80, timeout=10, use_coordinates=True):
+    if use_coordinates and image_name in CALIBRATED_COORDINATES:
+        x, y = CALIBRATED_COORDINATES[image_name]
+        print(f"[COORD MODE] {image_name} -> x={x}, y={y}")
+        return click_coordinates(x, y)
 
     region = REGIONS.get(image_name)
 
-    print(f"[DEBUG] Región usada para {image_name}: {region}")
+    print(
+        f"[IMAGE MODE] Buscando {image_name} "
+        f"con confianza={confidence:.2f}, región={region}"
+    )
 
     location = find_image(
         image_name,
         confidence=confidence,
         timeout=timeout,
-        region=region
+        region=region,
     )
 
     if location is None:
-        print(f"[ERROR] No se encontró: {image_name}")
-        return False
-
-    raw_x = int(location.x)
-    raw_y = int(location.y)
-
-    x = int(raw_x * SCALE)
-    y = int(raw_y * SCALE)
-
-    # Ajustes especiales
-
-    if image_name in SPECIAL_SCALE:
-
-        scale_x, scale_y = SPECIAL_SCALE[image_name]
-
-        x = int(raw_x * scale_x)
-        y = int(raw_y * scale_y)
-
-        print(
-            f"[SPECIAL SCALE] {image_name} "
-            f"-> x={x}, y={y}"
+        raise ClickError(
+            f"No se encontró una coincidencia segura para {image_name}. "
+            "Se canceló el flujo antes de hacer clic."
         )
 
-    print(f"[OK] Detectado {image_name}")
-    print(f"Raw: x={raw_x}, y={raw_y}")
-    print(f"Click corregido: x={x}, y={y}")
+    x = int(location.x * SCREENSHOT_TO_MOUSE_SCALE)
+    y = int(location.y * SCREENSHOT_TO_MOUSE_SCALE)
 
-    # Coordenadas calibradas
+    print(
+        f"[IMAGE MODE] {image_name} detectado en "
+        f"x={int(location.x)}, y={int(location.y)}; clic en x={x}, y={y}"
+    )
 
-    if image_name in COORDS:
+    return click_coordinates(x, y)
 
-        x, y = COORDS[image_name]
 
-        print(
-            f"[COORDS] {image_name} "
-            f"-> x={x}, y={y}"
+def assert_image_visible(image_name, confidence=0.80, timeout=10, region=None):
+    print(
+        f"[VERIFY] Esperando {image_name} "
+        f"con confianza={confidence:.2f}"
+    )
+
+    location = find_image(
+        image_name,
+        confidence=confidence,
+        timeout=timeout,
+        region=region,
+    )
+
+    if location is None:
+        raise ClickError(
+            f"Validación funcional fallida: no apareció {image_name} "
+            f"en {timeout} segundos."
         )
 
-    print(f"[FINAL] Click en x={x}, y={y}")
-
-    # Mover cursor
-
-    pyautogui.moveTo(x, y, duration=0.5)
-
-    time.sleep(0.5)
-
-    mouse.position = (x, y)
-
-    # Click fuerte
-
-    mouse.press(Button.left)
-
-    time.sleep(0.15)
-
-    mouse.release(Button.left)
-
-    time.sleep(0.15)
-
-    print("[OK] Click fuerte realizado")
+    print(f"[VERIFY] Validación exitosa: {image_name}")
 
     return True
 
+
 def click_coordinates(x, y):
+    _validate_calibration()
+
+    width, height = REFERENCE_SCREEN_SIZE
+
+    if not 0 <= x < width or not 0 <= y < height:
+        raise ClickError(
+            f"Coordenada fuera de pantalla: x={x}, y={y}; "
+            f"límites={width}x{height}"
+        )
 
     print(f"[COORD CLICK] x={x}, y={y}")
 
-    pyautogui.moveTo(x, y, duration=0.5)
+    pyautogui.moveTo(x, y, duration=CLICK_MOVE_DURATION)
 
     time.sleep(0.5)
 
     mouse.position = (x, y)
-
     mouse.press(Button.left)
 
-    time.sleep(0.15)
+    time.sleep(CLICK_HOLD_SECONDS)
 
     mouse.release(Button.left)
 

@@ -1,7 +1,7 @@
 import time
 from features.applications import open_anydesk
-from clicker import click_image
-from screenshot import save_screenshot, generate_pdf_report
+from clicker import assert_image_visible, click_image
+from screenshot import save_screenshot
 
 
 def run():
@@ -11,14 +11,14 @@ def run():
 
     time.sleep(3)
 
-    click_image("premium.png", confidence=0.35, timeout=10)
+    click_image("premium.png", timeout=10)
 
     time.sleep(2)
 
     save_screenshot("step_1_premium_clicked")
 
     #STEP 2 - 500
-    click_image("amount_1250.png", confidence=0.35, timeout=10)
+    click_image("amount_1250.png", timeout=10)
 
     time.sleep(2)
 
@@ -26,7 +26,7 @@ def run():
 
     # STEP 3 - CONTINUE
 
-    click_image("continue_button.png", confidence=0.25, timeout=10)
+    click_image("continue_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -34,7 +34,7 @@ def run():
 
     # STEP 4 - NO BENEFITS
 
-    click_image("no_benefits_button.png", confidence=0.35, timeout=10)
+    click_image("no_benefits_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -43,7 +43,7 @@ def run():
     # STEP 5 - PAYMENT
     time.sleep(2)
 
-    click_image("card.png", confidence=0.35, timeout=10)
+    click_image("card.png", timeout=10)
 
     time.sleep(2)
 
@@ -55,7 +55,12 @@ def run():
 
     time.sleep(2)
 
+    assert_image_visible(
+        "payment_success.png",
+        confidence=0.80,
+        timeout=15
+    )
+
+    save_screenshot("step_6_payment_success")
+
     save_screenshot("instructions pumb server")
-
-
-    generate_pdf_report()

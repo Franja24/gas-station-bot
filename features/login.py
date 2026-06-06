@@ -1,7 +1,7 @@
 import time
 from features.applications import open_anydesk
-from clicker import click_image, click_coordinates
-from screenshot import save_screenshot, generate_pdf_report
+from clicker import assert_image_visible, click_coordinates, click_image
+from screenshot import save_screenshot
 
 
 def run():
@@ -10,14 +10,14 @@ def run():
 
     open_anydesk()
 
-    click_image("login_button.png", confidence=0.25)
+    click_image("login_button.png")
 
     time.sleep(2)
 
     save_screenshot("01_login_start")
 
     # STEP  2 SCREEN LOGIN
-    click_image("login_two_button.png", confidence=0.25)
+    click_image("login_two_button.png")
 
     time.sleep(2)
 
@@ -39,11 +39,7 @@ def run():
 
     for digit in password:
 
-        click_image(
-            digit,
-            confidence=0.45,
-            timeout=10
-        )
+        click_image(digit, timeout=10)
 
         time.sleep(1)
 
@@ -51,7 +47,7 @@ def run():
 
     # STEP  3  LOGIN_BUTTON
 
-    click_image("entry_button.png", confidence=0.25)
+    click_image("entry_button.png")
 
     time.sleep(2)
 
@@ -59,7 +55,7 @@ def run():
 
     # STEP 4 ACTIVATE UNIT
 
-    click_image("activate_unit.png", confidence=0.25)
+    click_image("activate_unit.png")
 
     time.sleep(2)
 
@@ -67,11 +63,11 @@ def run():
 
     # STEP 5 START
 
-    click_image("start.png", confidence=0.25)
+    click_image("start.png")
 
     time.sleep(2)
 
     save_screenshot("05_START_unit")
 
-    generate_pdf_report()
-
+    # El login solo pasa si aparece la pantalla de selección de combustible.
+    assert_image_visible("premium.png", confidence=0.80, timeout=15)

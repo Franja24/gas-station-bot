@@ -3,7 +3,7 @@ import subprocess
 import pyautogui
 from features.applications import open_windows_app
 
-from screenshot import save_screenshot, generate_pdf_report
+from screenshot import save_screenshot
 
 
 def run():
@@ -30,4 +30,6 @@ def run():
 
     pyautogui.press("c")  # Colgar
 
-    generate_pdf_report()
+    time.sleep(2)
+
+    save_screenshot("pump_simulator_colgar_executed")
