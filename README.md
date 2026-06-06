@@ -21,8 +21,7 @@ Crear entorno virtual:
 python3 -m venv venv
 source venv/bin/activate
 
-pip install pyautogui opencv-python pillow mss numpy pynput behave
-```
+pip install -r requirements.txt
 
 ## Librerías
 pyautogui
@@ -39,6 +38,13 @@ Procesamiento de imágenes junto con OpenCV.
 Se usa para enviar clicks más compatibles con AnyDesk/RustDesk.
 ## behave
 Permite ejecutar escenarios BDD escritos en lenguaje tipo Gherkin.
+
+## Flujo recomendado con Git
+
+Crear una rama propia para calibrar coordenadas:
+
+```bash
+git checkout -b feature/calibracion-mi-maquina
 
 ## Modo seguro de clic
 
