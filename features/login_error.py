@@ -4,7 +4,7 @@ from clicker import assert_image_visible, click_coordinates, click_image
 from screenshot import save_screenshot
 
 
-EMPLOYEE_ID = "2"
+EMPLOYEE_ID = "3"
 PASSWORD = "123456"
 
 LOGIN_DIGITS = {
@@ -33,6 +33,7 @@ def run():
     print("Cambiando a AnyDesk")
 
     open_anydesk()
+    #STEP 1 ID AND PASSWORD
 
     click_image("login_button.png")
 
@@ -41,6 +42,7 @@ def run():
     save_screenshot("01_login_start")
 
     # STEP  2 SCREEN LOGIN
+    #ID
     enter_login_digits(EMPLOYEE_ID)
 
     time.sleep(2)
@@ -64,21 +66,5 @@ def run():
 
     save_screenshot("03_entry button")
 
-    # STEP 4 ACTIVATE UNIT
-
-    click_image("activate_unit.png")
-
-    time.sleep(2)
-
-    save_screenshot("04_activate_unit")
-
-    # STEP 5 START
-
-    click_image("start.png")
-
-    time.sleep(2)
-
-    save_screenshot("05_START_unit")
-
-    # El login solo pasa si aparece la pantalla de selección de combustible.
-    assert_image_visible("premium.png", confidence=0.80, timeout=15)
+    # El login_error solo pasa si aparece la pantalla de error y no inicia sesión.
+    assert_image_visible("login_error.png", confidence=0.80, timeout=15)

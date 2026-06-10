@@ -82,6 +82,7 @@ python main.py login
 python main.py magna
 python main.py premium
 python main.py sevenly_login
+python main.py sevenly_login_error
 python main.py benefits
 python main.py windows
 python main.py invoice
