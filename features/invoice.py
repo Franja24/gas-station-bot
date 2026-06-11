@@ -4,6 +4,15 @@ from clicker import click_image
 from screenshot import save_screenshot
 
 
+def click_asset(image_name, timeout=10):
+    return click_image(
+        image_name,
+        timeout=timeout,
+        use_coordinates=False,
+        use_region=False,
+    )
+
+
 def run():
     print("Cambiando a AnyDesk")
 
@@ -13,7 +22,7 @@ def run():
 
     time.sleep(3)
 
-    click_image("invoice.png", timeout=10)
+    click_asset("invoice.png", timeout=10)
 
     time.sleep(2)
 
@@ -32,14 +41,14 @@ def run():
     }
 
     for key in RFC:
-        click_image(RFC_KEYS[key], timeout=10)
+        click_asset(RFC_KEYS[key], timeout=10)
         time.sleep(0.5)
 
     save_screenshot("RFC_clicked")
 
     # STEP 3 - CONTINUE
 
-    click_image("continue_button.png", timeout=10)
+    click_asset("continue_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -47,7 +56,7 @@ def run():
 
     time.sleep(2)
 
-    click_image("continue_button.png", timeout=10)
+    click_asset("continue_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -57,7 +66,7 @@ def run():
 
     time.sleep(2)
 
-    click_image("print.png", timeout=10)
+    click_asset("print.png", timeout=10)
 
     time.sleep(2)
 

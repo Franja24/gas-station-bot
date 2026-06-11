@@ -9,6 +9,7 @@ from features.login import run as login_run
 from features.login_error import run as login_error_run
 from features.magna import run as magna_run
 from features.premium import run as premium_run
+from features.sevenly_e2e import run as sevenly_e2e_run
 from features.sevenly_login import run as sevenly_login_run
 from features.sevenly_login_error import run as sevenly_login_error_run
 from features.windows_app import run as windows_run
@@ -20,6 +21,7 @@ CASES = {
     "login_error": login_error_run,
     "magna": magna_run,
     "premium": premium_run,
+    "sevenly_e2e": sevenly_e2e_run,
     "sevenly_login": sevenly_login_run,
     "sevenly_login_error": sevenly_login_error_run,
     "benefits": benefits_run,

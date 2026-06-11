@@ -43,24 +43,33 @@ def _validate_calibration():
         )
 
 
-def click_image(image_name, confidence=0.80, timeout=10, use_coordinates=True):
+def click_image(
+    image_name,
+    confidence=0.80,
+    timeout=10,
+    use_coordinates=True,
+    use_region=True,
+    region=None,
+):
     if use_coordinates and image_name in CALIBRATED_COORDINATES:
         x, y = CALIBRATED_COORDINATES[image_name]
         print(f"[COORD MODE] {image_name} -> x={x}, y={y}")
         return click_coordinates(x, y)
 
-    region = REGIONS.get(image_name)
+    search_region = region
+    if search_region is None and use_region:
+        search_region = REGIONS.get(image_name)
 
     print(
         f"[IMAGE MODE] Buscando {image_name} "
-        f"con confianza={confidence:.2f}, región={region}"
+        f"con confianza={confidence:.2f}, región={search_region}"
     )
 
     location = find_image(
         image_name,
         confidence=confidence,
         timeout=timeout,
-        region=region,
+        region=search_region,
     )
 
     if location is None:

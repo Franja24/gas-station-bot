@@ -1,29 +1,69 @@
 import time
 from features.applications import open_anydesk
-from clicker import assert_image_visible, click_coordinates, click_image
+from clicker import ClickError, assert_image_visible, click_coordinates, click_image
+from config.settings import SCREENSHOT_TO_MOUSE_SCALE
+from detector import find_image
 from screenshot import save_screenshot
 
 
 EMPLOYEE_ID = "2"
 PASSWORD = "123456"
 
-LOGIN_DIGITS = {
-    "0": "login_zero_button.png",
-    "1": "login_one_button.png",
-    "2": "login_two_button.png",
-    "3": "login_three_button.png",
-    "4": "login_four_button.png",
-    "5": "login_five_button.png",
-    "6": "login_six_button.png",
-    "7": "login_seven_button.png",
-    "8": "login_eight_button.png",
-    "9": "login_nine_button.png",
+LOGIN_KEYPAD_OFFSETS = {
+    "1": (-473, 81),
+    "2": (-405, 81),
+    "3": (-337, 81),
+    "4": (-269, 81),
+    "5": (-201, 81),
+    "6": (-133, 81),
+    "7": (-65, 81),
+    "8": (3, 81),
+    "9": (71, 81),
+    "0": (139, 81),
 }
 
 
-def enter_login_digits(value):
+def click_asset(image_name, timeout=10, region=None):
+    return click_image(
+        image_name,
+        timeout=timeout,
+        use_coordinates=False,
+        use_region=False,
+        region=region,
+    )
+
+
+def get_login_keypad_centers():
+    location = find_image("pass_field.png", timeout=10)
+
+    if location is None:
+        raise ClickError(
+            "No se encontró el campo de contraseña para calcular el teclado."
+        )
+
+    print(
+        "[KEYPAD MODE] Ancla pass_field.png "
+        f"en x={int(location.x)}, y={int(location.y)}"
+    )
+
+    centers = {}
+
+    for digit, (offset_x, offset_y) in LOGIN_KEYPAD_OFFSETS.items():
+        raw_x = location.x + offset_x
+        raw_y = location.y + offset_y
+        centers[digit] = (
+            int(raw_x * SCREENSHOT_TO_MOUSE_SCALE),
+            int(raw_y * SCREENSHOT_TO_MOUSE_SCALE),
+        )
+
+    return centers
+
+
+def enter_login_digits(value, keypad_centers):
     for digit in value:
-        click_image(LOGIN_DIGITS[digit], timeout=10)
+        x, y = keypad_centers[digit]
+        print(f"[KEYPAD MODE] Digito {digit} -> x={x}, y={y}")
+        click_coordinates(x, y)
 
         time.sleep(1)
 
@@ -34,31 +74,33 @@ def run():
 
     open_anydesk()
 
-    click_image("login_button.png")
+    click_asset("login_button.png")
 
     time.sleep(2)
 
     save_screenshot("01_login_start")
 
+    keypad_centers = get_login_keypad_centers()
+
     # STEP  2 SCREEN LOGIN
-    enter_login_digits(EMPLOYEE_ID)
+    enter_login_digits(EMPLOYEE_ID, keypad_centers)
 
     time.sleep(2)
 
     #  campo de texto password
 
-    click_coordinates(660, 310)
+    click_asset("pass_field.png")
 
     time.sleep(1)
 
     # INGRESA PASSWORD
-    enter_login_digits(PASSWORD)
+    enter_login_digits(PASSWORD, keypad_centers)
 
     save_screenshot("02_login_completed")
 
     # STEP  3  LOGIN_BUTTON
 
-    click_image("entry_button.png")
+    click_asset("entry_button.png")
 
     time.sleep(2)
 
@@ -66,7 +108,7 @@ def run():
 
     # STEP 4 ACTIVATE UNIT
 
-    click_image("activate_unit.png")
+    click_asset("activate_unit.png")
 
     time.sleep(2)
 
@@ -74,7 +116,7 @@ def run():
 
     # STEP 5 START
 
-    click_image("start.png")
+    click_asset("start.png")
 
     time.sleep(2)
 

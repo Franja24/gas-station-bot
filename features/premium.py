@@ -4,6 +4,15 @@ from clicker import assert_image_visible, click_image
 from screenshot import save_screenshot
 
 
+def click_asset(image_name, timeout=10):
+    return click_image(
+        image_name,
+        timeout=timeout,
+        use_coordinates=False,
+        use_region=False,
+    )
+
+
 def run():
     print("Cambiando a AnyDesk")
 
@@ -11,14 +20,14 @@ def run():
 
     time.sleep(3)
 
-    click_image("premium.png", timeout=10)
+    click_asset("premium.png", timeout=10)
 
     time.sleep(2)
 
     save_screenshot("step_1_premium_clicked")
 
     #STEP 2 - 500
-    click_image("amount_1250.png", timeout=10)
+    click_asset("amount_1250.png", timeout=10)
 
     time.sleep(2)
 
@@ -26,7 +35,7 @@ def run():
 
     # STEP 3 - CONTINUE
 
-    click_image("continue_button.png", timeout=10)
+    click_asset("continue_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -34,7 +43,7 @@ def run():
 
     # STEP 4 - NO BENEFITS
 
-    click_image("no_benefits_button.png", timeout=10)
+    click_asset("no_benefits_button.png", timeout=10)
 
     time.sleep(2)
 
@@ -43,7 +52,7 @@ def run():
     # STEP 5 - PAYMENT
     time.sleep(2)
 
-    click_image("card.png", timeout=10)
+    click_asset("card.png", timeout=10)
 
     time.sleep(2)
 

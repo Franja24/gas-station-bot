@@ -6,7 +6,7 @@ Feature: Premium Purchase
 
     When we click on the "premium" button
 
-    And we click on the "amount_500_premium" button
+    And we click on the "amount_1250_premium" button
 
     And we click on the "continue" button
 
