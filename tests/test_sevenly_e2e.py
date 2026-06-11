@@ -5,37 +5,36 @@ from features import sevenly_e2e
 
 
 class SevenlyE2EFlowTests(unittest.TestCase):
-    @patch("features.sevenly_e2e.invoice_run")
-    @patch("features.sevenly_e2e.windows_run")
-    @patch("features.sevenly_e2e.magna_run")
-    @patch("features.sevenly_e2e.sevenly_login_run")
-    @patch("features.sevenly_e2e.login_run")
-    def test_runs_sevenly_magna_flow_in_order(
+    @patch("features.sevenly_e2e.run_stages")
+    def test_runs_sevenly_magna_flow_as_reportable_stages(
         self,
-        login_mock,
-        sevenly_login_mock,
-        magna_mock,
-        windows_mock,
-        invoice_mock,
+        run_stages_mock,
     ):
-        calls = []
+        expected_result = {"stages": []}
+        run_stages_mock.return_value = expected_result
 
-        login_mock.side_effect = lambda: calls.append("login")
-        sevenly_login_mock.side_effect = lambda: calls.append("sevenly_login")
-        magna_mock.side_effect = lambda: calls.append("magna")
-        windows_mock.side_effect = lambda: calls.append("windows")
-        invoice_mock.side_effect = lambda: calls.append("invoice")
+        result = sevenly_e2e.run()
 
-        sevenly_e2e.run()
-
+        self.assertIs(result, expected_result)
+        stages = run_stages_mock.call_args.args[0]
         self.assertEqual(
-            calls,
+            [stage_name for stage_name, _stage_function in stages],
             [
-                "login",
-                "sevenly_login",
-                "magna",
-                "windows",
-                "invoice",
+                "01_login",
+                "02_sevenly_login",
+                "03_magna",
+                "04_windows",
+                "05_invoice",
+            ],
+        )
+        self.assertEqual(
+            [stage_function for _stage_name, stage_function in stages],
+            [
+                sevenly_e2e.login_run,
+                sevenly_e2e.sevenly_login_run,
+                sevenly_e2e.magna_run,
+                sevenly_e2e.windows_run,
+                sevenly_e2e.invoice_run,
             ],
         )
 

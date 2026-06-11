@@ -10,17 +10,19 @@ EMPLOYEE_ID = "2"
 PASSWORD = "123456"
 
 LOGIN_KEYPAD_OFFSETS = {
-    "1": (-473, 81),
-    "2": (-405, 81),
-    "3": (-337, 81),
-    "4": (-269, 81),
-    "5": (-201, 81),
-    "6": (-133, 81),
-    "7": (-65, 81),
-    "8": (3, 81),
-    "9": (71, 81),
-    "0": (139, 81),
+    "1": (-301, 53),
+    "2": (-233, 53),
+    "3": (-165, 53),
+    "4": (-97, 53),
+    "5": (-29, 53),
+    "6": (39, 53),
+    "7": (107, 53),
+    "8": (175, 53),
+    "9": (243, 53),
+    "0": (311, 53),
 }
+
+PASSWORD_FIELD_OFFSET = (172, -28)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -33,30 +35,41 @@ def click_asset(image_name, timeout=10, region=None):
     )
 
 
-def get_login_keypad_centers():
-    location = find_image("pass_field.png", timeout=10)
+def find_login_form(timeout=10):
+    return find_image("login_form_anchor.png", timeout=timeout)
 
-    if location is None:
+
+def get_login_keypad_centers(form_location):
+    if form_location is None:
         raise ClickError(
-            "No se encontró el campo de contraseña para calcular el teclado."
+            "No se encontró el formulario de login para calcular el teclado."
         )
 
     print(
-        "[KEYPAD MODE] Ancla pass_field.png "
-        f"en x={int(location.x)}, y={int(location.y)}"
+        "[KEYPAD MODE] Ancla login_form_anchor.png "
+        f"en x={int(form_location.x)}, y={int(form_location.y)}"
     )
 
     centers = {}
 
     for digit, (offset_x, offset_y) in LOGIN_KEYPAD_OFFSETS.items():
-        raw_x = location.x + offset_x
-        raw_y = location.y + offset_y
+        raw_x = form_location.x + offset_x
+        raw_y = form_location.y + offset_y
         centers[digit] = (
             int(raw_x * SCREENSHOT_TO_MOUSE_SCALE),
             int(raw_y * SCREENSHOT_TO_MOUSE_SCALE),
         )
 
     return centers
+
+
+def click_password_field(form_location):
+    offset_x, offset_y = PASSWORD_FIELD_OFFSET
+    x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
+    y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
+
+    print(f"[KEYPAD MODE] Campo contraseña -> x={x}, y={y}")
+    click_coordinates(x, y)
 
 
 def enter_login_digits(value, keypad_centers):
@@ -68,19 +81,41 @@ def enter_login_digits(value, keypad_centers):
         time.sleep(1)
 
 
+def open_login_form(max_attempts=3):
+    for attempt in range(1, max_attempts + 1):
+        form_location = find_login_form(timeout=2)
+
+        if form_location is not None:
+            print("[LOGIN] Formulario de usuario y contraseña visible")
+            return form_location
+
+        print(f"[LOGIN] Abriendo formulario, intento {attempt}/{max_attempts}")
+        click_asset("login_button.png")
+
+        time.sleep(2)
+
+        form_location = find_login_form(timeout=3)
+
+        if form_location is not None:
+            print("[LOGIN] Formulario de usuario y contraseña visible")
+            return form_location
+
+    raise ClickError(
+        "No se pudo abrir el formulario de usuario y contraseña."
+    )
+
+
 def run():
 
     print("Cambiando a AnyDesk")
 
     open_anydesk()
 
-    click_asset("login_button.png")
-
-    time.sleep(2)
+    form_location = open_login_form()
 
     save_screenshot("01_login_start")
 
-    keypad_centers = get_login_keypad_centers()
+    keypad_centers = get_login_keypad_centers(form_location)
 
     # STEP  2 SCREEN LOGIN
     enter_login_digits(EMPLOYEE_ID, keypad_centers)
@@ -89,7 +124,7 @@ def run():
 
     #  campo de texto password
 
-    click_asset("pass_field.png")
+    click_password_field(form_location)
 
     time.sleep(1)
 
