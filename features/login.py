@@ -1,31 +1,108 @@
 import time
 from features.applications import open_anydesk
-from clicker import assert_image_visible, click_coordinates, click_image
+from clicker import ClickError, assert_image_visible, click_coordinates, click_image
+from config.settings import SCREENSHOT_TO_MOUSE_SCALE
+from detector import find_image
 from screenshot import save_screenshot
 
 
 EMPLOYEE_ID = "2"
 PASSWORD = "123456"
 
-LOGIN_DIGITS = {
-    "0": "login_zero_button.png",
-    "1": "login_one_button.png",
-    "2": "login_two_button.png",
-    "3": "login_three_button.png",
-    "4": "login_four_button.png",
-    "5": "login_five_button.png",
-    "6": "login_six_button.png",
-    "7": "login_seven_button.png",
-    "8": "login_eight_button.png",
-    "9": "login_nine_button.png",
+LOGIN_KEYPAD_OFFSETS = {
+    "1": (-301, 53),
+    "2": (-233, 53),
+    "3": (-165, 53),
+    "4": (-97, 53),
+    "5": (-29, 53),
+    "6": (39, 53),
+    "7": (107, 53),
+    "8": (175, 53),
+    "9": (243, 53),
+    "0": (311, 53),
 }
 
+PASSWORD_FIELD_OFFSET = (172, -28)
 
-def enter_login_digits(value):
+
+def click_asset(image_name, timeout=10, region=None):
+    return click_image(
+        image_name,
+        timeout=timeout,
+        use_coordinates=False,
+        use_region=False,
+        region=region,
+    )
+
+
+def find_login_form(timeout=10):
+    return find_image("login_form_anchor.png", timeout=timeout)
+
+
+def get_login_keypad_centers(form_location):
+    if form_location is None:
+        raise ClickError(
+            "No se encontró el formulario de login para calcular el teclado."
+        )
+
+    print(
+        "[KEYPAD MODE] Ancla login_form_anchor.png "
+        f"en x={int(form_location.x)}, y={int(form_location.y)}"
+    )
+
+    centers = {}
+
+    for digit, (offset_x, offset_y) in LOGIN_KEYPAD_OFFSETS.items():
+        raw_x = form_location.x + offset_x
+        raw_y = form_location.y + offset_y
+        centers[digit] = (
+            int(raw_x * SCREENSHOT_TO_MOUSE_SCALE),
+            int(raw_y * SCREENSHOT_TO_MOUSE_SCALE),
+        )
+
+    return centers
+
+
+def click_password_field(form_location):
+    offset_x, offset_y = PASSWORD_FIELD_OFFSET
+    x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
+    y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
+
+    print(f"[KEYPAD MODE] Campo contraseña -> x={x}, y={y}")
+    click_coordinates(x, y)
+
+
+def enter_login_digits(value, keypad_centers):
     for digit in value:
-        click_image(LOGIN_DIGITS[digit], timeout=10)
+        x, y = keypad_centers[digit]
+        print(f"[KEYPAD MODE] Digito {digit} -> x={x}, y={y}")
+        click_coordinates(x, y)
 
         time.sleep(1)
+
+
+def open_login_form(max_attempts=3):
+    for attempt in range(1, max_attempts + 1):
+        form_location = find_login_form(timeout=2)
+
+        if form_location is not None:
+            print("[LOGIN] Formulario de usuario y contraseña visible")
+            return form_location
+
+        print(f"[LOGIN] Abriendo formulario, intento {attempt}/{max_attempts}")
+        click_asset("login_button.png")
+
+        time.sleep(2)
+
+        form_location = find_login_form(timeout=3)
+
+        if form_location is not None:
+            print("[LOGIN] Formulario de usuario y contraseña visible")
+            return form_location
+
+    raise ClickError(
+        "No se pudo abrir el formulario de usuario y contraseña."
+    )
 
 
 def run():
@@ -34,31 +111,31 @@ def run():
 
     open_anydesk()
 
-    click_image("login_button.png")
-
-    time.sleep(2)
+    form_location = open_login_form()
 
     save_screenshot("01_login_start")
 
+    keypad_centers = get_login_keypad_centers(form_location)
+
     # STEP  2 SCREEN LOGIN
-    enter_login_digits(EMPLOYEE_ID)
+    enter_login_digits(EMPLOYEE_ID, keypad_centers)
 
     time.sleep(2)
 
     #  campo de texto password
 
-    click_coordinates(660, 310)
+    click_password_field(form_location)
 
     time.sleep(1)
 
     # INGRESA PASSWORD
-    enter_login_digits(PASSWORD)
+    enter_login_digits(PASSWORD, keypad_centers)
 
     save_screenshot("02_login_completed")
 
     # STEP  3  LOGIN_BUTTON
 
-    click_image("entry_button.png")
+    click_asset("entry_button.png")
 
     time.sleep(2)
 
@@ -66,7 +143,7 @@ def run():
 
     # STEP 4 ACTIVATE UNIT
 
-    click_image("activate_unit.png")
+    click_asset("activate_unit.png")
 
     time.sleep(2)
 
@@ -74,7 +151,7 @@ def run():
 
     # STEP 5 START
 
-    click_image("start.png")
+    click_asset("start.png")
 
     time.sleep(2)
 
