@@ -94,8 +94,6 @@ def run():
 
     open_anydesk()
 
-    time.sleep(3)
-
     if is_sevenly_logged_in():
         print("[SEVENLY] Cliente ya está logueado")
         save_screenshot("step_0_sevenly_already_logged_in")
@@ -104,19 +102,17 @@ def run():
     # STEP 1 - SEVENLY
     click_asset("sevenly.png", timeout=10)
 
-    time.sleep(2)
-
-    save_screenshot("step_1_sevenly_clicked")
-
-    if is_sevenly_logged_in():
+    if is_sevenly_logged_in(timeout=3):
         print("[SEVENLY] Cliente ya está logueado")
         save_screenshot("step_1.1_sevenly_already_logged_in")
         return
 
+    assert_image_visible("telefon_number.png", confidence=0.80, timeout=10)
+
+    save_screenshot("step_1_sevenly_clicked")
+
     # STEP 2 - PHONE NUMBER OPTION
     click_asset("telefon_number.png", timeout=10)
-
-    time.sleep(2)
 
     save_screenshot("step_2_telefon_number_clicked")
 
@@ -131,12 +127,11 @@ def run():
     # STEP 4 - CONTINUE
     click_asset("continue_button.png", timeout=10)
 
-    time.sleep(4)
+    assert_image_visible("premium.png", confidence=0.80, timeout=15)
 
     save_screenshot("step_4_continue_clicked")
 
     # STEP 5 - HOLA CLIENTE
-    assert_image_visible("premium.png", confidence=0.80, timeout=15)
     assert_image_visible(
         "sevenly.png",
         confidence=0.80,

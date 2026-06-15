@@ -92,9 +92,7 @@ def open_login_form(max_attempts=3):
         print(f"[LOGIN] Abriendo formulario, intento {attempt}/{max_attempts}")
         click_asset("login_button.png")
 
-        time.sleep(2)
-
-        form_location = find_login_form(timeout=3)
+        form_location = find_login_form(timeout=5)
 
         if form_location is not None:
             print("[LOGIN] Formulario de usuario y contraseña visible")
@@ -120,8 +118,6 @@ def run():
     # STEP  2 SCREEN LOGIN
     enter_login_digits(EMPLOYEE_ID, keypad_centers)
 
-    time.sleep(2)
-
     #  campo de texto password
 
     click_password_field(form_location)
@@ -137,7 +133,7 @@ def run():
 
     click_asset("entry_button.png")
 
-    time.sleep(2)
+    assert_image_visible("activate_unit.png", confidence=0.80, timeout=15)
 
     save_screenshot("03_entry button")
 
@@ -145,7 +141,7 @@ def run():
 
     click_asset("activate_unit.png")
 
-    time.sleep(2)
+    assert_image_visible("start.png", confidence=0.80, timeout=15)
 
     save_screenshot("04_activate_unit")
 
@@ -153,9 +149,6 @@ def run():
 
     click_asset("start.png")
 
-    time.sleep(2)
+    assert_image_visible("premium.png", confidence=0.80, timeout=15)
 
     save_screenshot("05_START_unit")
-
-    # El login solo pasa si aparece la pantalla de selección de combustible.
-    assert_image_visible("premium.png", confidence=0.80, timeout=15)

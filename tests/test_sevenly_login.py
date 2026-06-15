@@ -77,6 +77,7 @@ class SevenlyLoginFlowTests(unittest.TestCase):
         self.assertEqual(
             assert_image_visible_mock.call_args_list,
             [
+                call("telefon_number.png", confidence=0.80, timeout=10),
                 call("premium.png", confidence=0.80, timeout=15),
                 call(
                     "sevenly.png",

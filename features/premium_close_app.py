@@ -1,3 +1,7 @@
+import time
+
+import pyautogui
+
 from clicker import assert_image_visible, click_image
 from features.applications import open_anydesk
 from screenshot import save_screenshot
@@ -12,16 +16,23 @@ def click_asset(image_name, timeout=10):
     )
 
 
+def close_with_alt_f4():
+    pyautogui.hotkey("alt", "f4")
+
+    time.sleep(2)
+
+
 def run():
     print("Cambiando a AnyDesk")
 
     open_anydesk()
 
-    click_asset("magna.png", timeout=10)
+    # STEP 1 - PREMIUM
+    click_asset("premium.png", timeout=10)
 
     assert_image_visible("amount_1250.png", confidence=0.80, timeout=10)
 
-    save_screenshot("step_1_magna_clicked")
+    save_screenshot("step_1_premium_clicked")
 
     # STEP 2 - 1250
     click_asset("amount_1250.png", timeout=10)
@@ -30,26 +41,7 @@ def run():
 
     save_screenshot("step_2_amount_clicked")
 
-    # STEP 3 - CONTINUE
-    click_asset("continue_button.png", timeout=10)
+    # STEP 3 - CLOSE APP
+    close_with_alt_f4()
 
-    assert_image_visible("card.png", confidence=0.80, timeout=10)
-
-    save_screenshot("step_3_continue_clicked")
-
-    # STEP 4 - PAYMENT
-    click_asset("card.png", timeout=10)
-
-    save_screenshot("step_4_wait_payment")
-
-    assert_image_visible(
-        "payment_success.png",
-        confidence=0.80,
-        timeout=30,
-    )
-
-    save_screenshot("step_4.1_complete_payment")
-
-    save_screenshot("step_5_payment_success")
-
-    save_screenshot("instructions pumb server")
+    save_screenshot("step_3_alt_f4_close_attempt")

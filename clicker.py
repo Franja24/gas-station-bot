@@ -140,3 +140,36 @@ def click_coordinates(x, y):
     print("[OK] Click por coordenadas realizado")
 
     return True
+
+
+def double_click_coordinates(x, y, interval=0.10):
+    _validate_calibration()
+
+    width, height = REFERENCE_SCREEN_SIZE
+
+    if not 0 <= x < width or not 0 <= y < height:
+        raise ClickError(
+            f"Coordenada fuera de pantalla: x={x}, y={y}; "
+            f"límites={width}x{height}"
+        )
+
+    print(f"[COORD DOUBLE CLICK] x={x}, y={y}")
+
+    pyautogui.moveTo(x, y, duration=CLICK_MOVE_DURATION)
+
+    time.sleep(0.5)
+
+    mouse.position = (x, y)
+
+    for _ in range(2):
+        mouse.press(Button.left)
+
+        time.sleep(CLICK_HOLD_SECONDS)
+
+        mouse.release(Button.left)
+
+        time.sleep(interval)
+
+    print("[OK] Doble click por coordenadas realizado")
+
+    return True

@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import call, patch
 
 from features import login, login_error
@@ -10,37 +11,57 @@ class LoginFlowTests(unittest.TestCase):
     @patch("features.login.click_coordinates")
     @patch("features.login.click_image")
     @patch("features.login.time.sleep")
+    @patch("features.login.find_login_form")
     @patch("features.login.open_anydesk")
     def test_login_uses_configurable_id_and_password(
         self,
         open_anydesk_mock,
+        find_login_form_mock,
         _sleep_mock,
         click_image_mock,
         click_coordinates_mock,
         _save_screenshot_mock,
         assert_image_visible_mock,
     ):
+        find_login_form_mock.return_value = SimpleNamespace(x=1280, y=600)
+
         login.run()
 
         open_anydesk_mock.assert_called_once_with()
-        click_coordinates_mock.assert_called_once_with(660, 310)
+        self.assertEqual(click_coordinates_mock.call_count, 8)
         self.assertEqual(
-            click_image_mock.call_args_list[:8],
+            click_image_mock.call_args_list,
             [
-                call("login_button.png"),
-                call("login_two_button.png", timeout=10),
-                call("login_one_button.png", timeout=10),
-                call("login_two_button.png", timeout=10),
-                call("login_three_button.png", timeout=10),
-                call("login_four_button.png", timeout=10),
-                call("login_five_button.png", timeout=10),
-                call("login_six_button.png", timeout=10),
+                call(
+                    "entry_button.png",
+                    timeout=10,
+                    use_coordinates=False,
+                    use_region=False,
+                    region=None,
+                ),
+                call(
+                    "activate_unit.png",
+                    timeout=10,
+                    use_coordinates=False,
+                    use_region=False,
+                    region=None,
+                ),
+                call(
+                    "start.png",
+                    timeout=10,
+                    use_coordinates=False,
+                    use_region=False,
+                    region=None,
+                ),
             ],
         )
-        assert_image_visible_mock.assert_called_once_with(
-            "premium.png",
-            confidence=0.80,
-            timeout=15,
+        self.assertEqual(
+            assert_image_visible_mock.call_args_list,
+            [
+                call("activate_unit.png", confidence=0.80, timeout=15),
+                call("start.png", confidence=0.80, timeout=15),
+                call("premium.png", confidence=0.80, timeout=15),
+            ],
         )
 
     @patch("features.login_error.assert_image_visible")

@@ -6,16 +6,16 @@ from features import premium
 
 
 class PremiumFlowTests(unittest.TestCase):
+    @patch("features.premium.assert_image_visible")
     @patch("features.premium.save_screenshot")
     @patch("features.premium.find_image")
     @patch("features.premium.click_image")
-    @patch("features.premium.time.sleep")
     def test_clicks_no_benefits_when_prompt_is_visible(
         self,
-        _sleep_mock,
         click_image_mock,
         find_image_mock,
         save_screenshot_mock,
+        assert_image_visible_mock,
     ):
         find_image_mock.return_value = SimpleNamespace(x=100, y=100)
 
@@ -27,6 +27,11 @@ class PremiumFlowTests(unittest.TestCase):
             use_coordinates=False,
             use_region=False,
         )
+        assert_image_visible_mock.assert_called_once_with(
+            "card.png",
+            confidence=0.80,
+            timeout=10,
+        )
         save_screenshot_mock.assert_called_once_with(
             "step_4_no_benefits_clicked"
         )
@@ -34,10 +39,8 @@ class PremiumFlowTests(unittest.TestCase):
     @patch("features.premium.save_screenshot")
     @patch("features.premium.find_image")
     @patch("features.premium.click_image")
-    @patch("features.premium.time.sleep")
     def test_skips_no_benefits_when_payment_is_already_visible(
         self,
-        _sleep_mock,
         click_image_mock,
         find_image_mock,
         save_screenshot_mock,
@@ -53,8 +56,8 @@ class PremiumFlowTests(unittest.TestCase):
         self.assertEqual(
             find_image_mock.call_args_list,
             [
-                call("no_benefits_button.png", timeout=3),
-                call("card.png", timeout=5),
+                call("no_benefits_button.png", timeout=1),
+                call("card.png", timeout=1),
             ],
         )
         save_screenshot_mock.assert_called_once_with(

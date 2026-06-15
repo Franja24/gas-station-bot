@@ -1,5 +1,6 @@
 COORDINATES = {
     "start.png": (700, 520),
+    "petro_kiosk_app_icon": (429, 19),
     "login_button.png": (680, 535),
     "entry_button.png": (650, 500),
     "activate_unit.png": (680, 530),
