@@ -18,6 +18,7 @@ from features.sevenly_login import run as sevenly_login_run
 from features.sevenly_login_error import run as sevenly_login_error_run
 from features.windows_app import run as windows_run
 from features.windows_app_close_app import run as windows_app_close_run
+from features.windows_app_close_hung_up import run as windows_app_close_hung_up_run
 
 
 CASES = {
@@ -36,6 +37,7 @@ CASES = {
     "benefits": benefits_run,
     "windows": windows_run,
     "windows_app_close": windows_app_close_run,
+    "windows_app_close_hung_up": windows_app_close_hung_up_run,
     "invoice": invoice_run,
 }
 

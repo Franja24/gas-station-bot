@@ -14,8 +14,11 @@ open_kiosco_stub.run = lambda: None
 login_stub = types.ModuleType("features.login")
 login_stub.run = lambda: None
 
-premium_close_stub = types.ModuleType("features.premium_close_app")
-premium_close_stub.run = lambda: None
+sevenly_login_stub = types.ModuleType("features.sevenly_login")
+sevenly_login_stub.run = lambda: None
+
+magna_stub = types.ModuleType("features.magna")
+magna_stub.run = lambda: None
 
 windows_close_stub = types.ModuleType("features.windows_app_close_app")
 windows_close_stub.run = lambda: None
@@ -24,7 +27,8 @@ _STUBBED_MODULES = {
     "case_runner": case_runner_stub,
     "features.open_kiosco": open_kiosco_stub,
     "features.login": login_stub,
-    "features.premium_close_app": premium_close_stub,
+    "features.sevenly_login": sevenly_login_stub,
+    "features.magna": magna_stub,
     "features.windows_app_close_app": windows_close_stub,
 }
 
@@ -48,7 +52,8 @@ if features_package is not None:
     for feature_name in (
         "open_kiosco",
         "login",
-        "premium_close_app",
+        "sevenly_login",
+        "magna",
         "windows_app_close_app",
     ):
         feature_module = getattr(features_package, feature_name, None)
@@ -58,7 +63,7 @@ if features_package is not None:
 
 class CloseAppE2EFlowTests(unittest.TestCase):
     @patch("features.close_app_e2e.run_stages")
-    def test_runs_open_login_premium_and_close_stages(self, run_stages_mock):
+    def test_opens_kiosco_runs_flow_and_reopens_kiosco(self, run_stages_mock):
         expected_result = {"stages": []}
         run_stages_mock.return_value = expected_result
 
@@ -71,8 +76,11 @@ class CloseAppE2EFlowTests(unittest.TestCase):
             [
                 "01_open_kiosco",
                 "02_login",
-                "03_premium_close_app",
-                "04_windows_app_close",
+                "03_sevenly_login",
+                "04_magna",
+                "05_windows_app_close",
+                "06_open_kiosco",
+                "07_login",
             ],
         )
         self.assertEqual(
@@ -80,8 +88,11 @@ class CloseAppE2EFlowTests(unittest.TestCase):
             [
                 close_app_e2e.open_kiosco_run,
                 close_app_e2e.login_run,
-                close_app_e2e.premium_close_app_run,
+                close_app_e2e.sevenly_login_run,
+                close_app_e2e.magna_run,
                 close_app_e2e.windows_app_close_run,
+                close_app_e2e.open_kiosco_run,
+                close_app_e2e.login_run,
             ],
         )
 
