@@ -1,6 +1,6 @@
-import time
 from features.applications import open_anydesk
 from clicker import click_image, click_coordinates
+from detector import wait_for_image
 from screenshot import save_screenshot, generate_pdf_report
 
 
@@ -10,16 +10,18 @@ def run():
 
     open_anydesk()
 
+    wait_for_image("login_button.png", confidence=0.25, timeout=15)
+
     click_image("login_button.png", confidence=0.25)
 
-    time.sleep(2)
+    wait_for_image("login_two_button.png", confidence=0.25, timeout=15)
 
     save_screenshot("01_login_start")
 
     # STEP  2 SCREEN LOGIN
     click_image("login_two_button.png", confidence=0.25)
 
-    time.sleep(2)
+    wait_for_image("login_one_button.png", confidence=0.25, timeout=15)
 
     #  campo de texto password
 
@@ -27,7 +29,6 @@ def run():
 
     # INGRESA PASSWORD
 
-    time.sleep(1)
     password = [
         "login_one_button.png",
         "login_two_button.png",
@@ -45,15 +46,13 @@ def run():
             timeout=10
         )
 
-        time.sleep(1)
-
     save_screenshot("02_login_completed")
 
     # STEP  3  LOGIN_BUTTON
 
     click_image("entry_button.png", confidence=0.25)
 
-    time.sleep(2)
+    wait_for_image("activate_unit.png", confidence=0.25, timeout=20)
 
     save_screenshot("03_entry button")
 
@@ -61,7 +60,7 @@ def run():
 
     click_image("activate_unit.png", confidence=0.25)
 
-    time.sleep(2)
+    wait_for_image("start.png", confidence=0.25, timeout=20)
 
     save_screenshot("04_activate_unit")
 
@@ -69,9 +68,8 @@ def run():
 
     click_image("start.png", confidence=0.25)
 
-    time.sleep(2)
+    wait_for_image("premium.png", confidence=0.35, timeout=20)
 
     save_screenshot("05_START_unit")
 
     generate_pdf_report()
-

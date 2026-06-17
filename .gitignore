@@ -6,3 +6,6 @@ __pycache__/
 debug_screen.png
 test.png
 *.pdf
+evidence/
+work/
+outputs/

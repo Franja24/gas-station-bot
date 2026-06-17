@@ -1,6 +1,7 @@
 import time
 from features.applications import open_anydesk
 from clicker import click_image
+from detector import wait_for_image
 from screenshot import save_screenshot, generate_pdf_report
 
 
@@ -11,11 +12,11 @@ def run():
 
     open_anydesk()
 
-    time.sleep(3)
+    wait_for_image("invoice.png", confidence=0.35, timeout=15)
 
     click_image("invoice.png", confidence=0.35, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("rfc_x.png", confidence=0.25, timeout=15)
 
 
     save_screenshot("Step_return_anydesk_invoice_clicked")
@@ -33,7 +34,6 @@ def run():
 
     for key in RFC:
         click_image(RFC_KEYS[key], confidence=0.25, timeout=10)
-        time.sleep(0.5)
 
     save_screenshot("RFC_clicked")
 
@@ -49,17 +49,13 @@ def run():
 
     click_image("continue_button.png", confidence=0.25, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("print.png", confidence=0.25, timeout=20)
 
     save_screenshot("step_3.1_continue_clicked")
 
     # STEP 4 - PRINT/FINISH
 
-    time.sleep(2)
-
     click_image("print.png", confidence=0.25, timeout=10)
-
-    time.sleep(2)
 
     save_screenshot("step_4_print_clicked")
     generate_pdf_report()

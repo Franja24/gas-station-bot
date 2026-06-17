@@ -208,6 +208,64 @@ def click_image(image_name, confidence=0.45, timeout=10):
 
     return True
 
+
+def _get_screen_scale(scale):
+    if scale is not None:
+        return scale, scale
+
+    screen_size = pyautogui.size()
+    screenshot_size = pyautogui.screenshot().size
+
+    return (
+        screen_size.width / screenshot_size[0],
+        screen_size.height / screenshot_size[1]
+    )
+
+
+def click_image_asset(image_name, confidence=0.45, timeout=10, region=None, scale=None):
+    print(f"[ASSET CLICK] Buscando {image_name} en region={region}")
+
+    location = find_image(
+        image_name,
+        confidence=confidence,
+        timeout=timeout,
+        region=region
+    )
+
+    if location is None:
+        print(f"[ASSET CLICK ERROR] No se encontró: {image_name}")
+        return False
+
+    raw_x = int(location.x)
+    raw_y = int(location.y)
+    scale_x, scale_y = _get_screen_scale(scale)
+    x = int(raw_x * scale_x)
+    y = int(raw_y * scale_y)
+
+    print(f"[ASSET CLICK OK] Detectado {image_name}")
+    print(f"Raw: x={raw_x}, y={raw_y}")
+    print(f"Scale: x={scale_x:.2f}, y={scale_y:.2f}")
+    print(f"Click por asset: x={x}, y={y}")
+
+    pyautogui.moveTo(x, y, duration=0.5)
+
+    time.sleep(0.5)
+
+    mouse.position = (x, y)
+
+    mouse.press(Button.left)
+
+    time.sleep(0.15)
+
+    mouse.release(Button.left)
+
+    time.sleep(0.15)
+
+    print("[OK] Click por asset realizado")
+
+    return True
+
+
 def click_coordinates(x, y):
 
     print(f"[COORD CLICK] x={x}, y={y}")

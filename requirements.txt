@@ -1,0 +1,8 @@
+pyautogui
+opencv-python
+pillow
+mss
+numpy
+pynput
+behave
+reportlab

@@ -12,6 +12,7 @@ Automatización visual para flujo de compra en POS de gasolinera usando Python, 
 - NumPy
 - Pynput
 - Behave
+- ReportLab
 
 ## Instalación
 
@@ -21,7 +22,28 @@ Crear entorno virtual:
 python3 -m venv venv
 source venv/bin/activate
 
-pip install pyautogui opencv-python pillow mss numpy pynput behave
+pip install -r requirements.txt
+```
+
+## Ejecución con Behave
+
+Correr todos los flujos:
+
+```bash
+behave
+```
+
+Correr un flujo específico:
+
+```bash
+behave --tags @login
+behave --tags @premium
+behave --tags @sevenly
+behave --tags @invoice
+behave --tags @windows_app
+```
+
+El tag `@sevenly` corre el camino completo: login, compra premium, simulador de bomba y factura.
 
 ## Librerías
 pyautogui
@@ -38,3 +60,5 @@ Procesamiento de imágenes junto con OpenCV.
 Se usa para enviar clicks más compatibles con AnyDesk/RustDesk.
 ## behave
 Permite ejecutar escenarios BDD escritos en lenguaje tipo Gherkin.
+## reportlab
+Genera el reporte PDF con las evidencias de la corrida.

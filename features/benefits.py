@@ -1,8 +1,8 @@
 import time
-import pyautogui
 from features.applications import open_anydesk
 
 from clicker import click_image
+from detector import wait_for_image
 from screenshot import save_screenshot, generate_pdf_report
 
 
@@ -12,12 +12,12 @@ def run():
 
     open_anydesk()
 
-    time.sleep(3)
+    wait_for_image("premium.png", confidence=0.35, timeout=15)
 
 
     click_image("premium.png", confidence=0.35, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("amount_1250.png", confidence=0.35, timeout=15)
 
     save_screenshot("step_1_premium_clicked")
 
@@ -25,7 +25,7 @@ def run():
 
     click_image("amount_1250.png", confidence=0.35, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("continue_button.png", confidence=0.25, timeout=15)
 
     save_screenshot("step_2_amount_clicked")
 
@@ -33,7 +33,7 @@ def run():
 
     click_image("continue_button.png", confidence=0.25, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("benefits_telefon_number_button.png", confidence=0.25, timeout=15)
 
     save_screenshot("step_3_clic_continue_button")
 
@@ -41,7 +41,7 @@ def run():
 
     click_image("benefits_telefon_number_button.png", confidence=0.25, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("one_button.png", confidence=0.25, timeout=15)
 
     save_screenshot("step_4_benefits_clicked")
 
@@ -69,8 +69,6 @@ def run():
             timeout=10
         )
 
-        time.sleep(2)
-
     save_screenshot("step_5_benefits_number_clicked")
 
     click_image("continue_button.png", confidence=0.35, timeout=10)
@@ -85,9 +83,8 @@ def run():
 
     click_image("continue_button.png", confidence=0.35, timeout=10)
 
-    time.sleep(2)
+    wait_for_image("card.png", confidence=0.35, timeout=20)
 
     save_screenshot("step_6_continue_final_clicked")
 
     generate_pdf_report()
-
