@@ -17,6 +17,7 @@ from features.open_kiosco import run as open_kiosco_run
 from features.cancel import run as cancel_run
 from features.premium_close_app import run as premium_close_app_run
 from features.premium import run as premium_run
+from features.print import run as print_run
 from features.sevenly_e2e import run as sevenly_e2e_run
 from features.sevenly_login import run as sevenly_login_run
 from features.sevenly_login_error import run as sevenly_login_error_run
@@ -40,6 +41,7 @@ CASES = {
     "open_kiosco": open_kiosco_run,
     "premium": premium_run,
     "premium_close_app": premium_close_app_run,
+    "print": print_run,
     "sevenly_e2e": sevenly_e2e_run,
     "sevenly_login": sevenly_login_run,
     "sevenly_login_error": sevenly_login_error_run,

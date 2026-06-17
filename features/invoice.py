@@ -13,6 +13,15 @@ def click_asset(image_name, timeout=10):
     )
 
 
+def click_calibrated(image_name, timeout=10):
+    return click_image(
+        image_name,
+        timeout=timeout,
+        use_coordinates=True,
+        use_region=False,
+    )
+
+
 def run():
     print("Cambiando a AnyDesk")
 
@@ -59,14 +68,4 @@ def run():
 
     save_screenshot("step_3.1_continue_clicked")
 
-    # STEP 4 - PRINT/FINISH
 
-    #click_asset("print.png", timeout=10)
-
-    #save_screenshot("step_4_print_clicked")
-
-    click_asset("continue_button.png", timeout=10)
-
-    assert_image_visible("magna.png", confidence=0.80, timeout=15)
-
-    save_screenshot("step_4_Finsh flow")
