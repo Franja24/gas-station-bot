@@ -5,6 +5,7 @@ REGIONS = {
     "premium.png": (690, 150, 140, 80),
     "amount_1250.png": (680, 230, 150, 150),
     "continue_button.png": (680, 490, 180, 80),
+    "finalize_button.png": (680, 485, 180, 80),
     "benefits_telefon_number_button.png": (450, 300, 380, 200),
     "one_button.png": PHONE_KEYPAD_REGION,
     "two_button.png": PHONE_KEYPAD_REGION,

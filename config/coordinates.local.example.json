@@ -1,0 +1,13 @@
+{
+  "coordinates": {
+    "petro_kiosk_app_icon": [429, 19],
+    "charge_type_amount_tab.png": [625, 183],
+    "charge_amount_500.png": [752, 263],
+    "charge_type_liters_tab.png": [683, 183],
+    "charge_liters_20.png": [752, 263],
+    "finalize_button.png": [770, 520]
+  },
+  "login_keyboard": {},
+  "phone_keyboard": {},
+  "rfc_keyboard": {}
+}

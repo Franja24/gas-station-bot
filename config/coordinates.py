@@ -1,4 +1,7 @@
-COORDINATES = {
+from config.local_coordinates import load_local_coordinates
+
+
+DEFAULT_COORDINATES = {
     "start.png": (700, 520),
     "petro_kiosk_app_icon": (429, 19),
     "login_button.png": (680, 535),
@@ -16,4 +19,12 @@ COORDINATES = {
     "invoice.png": (800, 340),
     "benefits_telefon_number_button.png": (700, 385),
     "telefon_number.png": (700, 385),
+    "charge_type_amount_tab.png": (625, 183),
+    "charge_amount_500.png": (752, 263),
+    "charge_type_liters_tab.png": (683, 183),
+    "charge_liters_20.png": (752, 263),
+    "finalize_button.png": (770, 520),
 }
+
+
+COORDINATES = load_local_coordinates("coordinates", DEFAULT_COORDINATES)

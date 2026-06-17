@@ -1,4 +1,7 @@
-LOGIN_KEYBOARD_COORDINATES = {
+from config.local_coordinates import load_local_coordinates
+
+
+DEFAULT_LOGIN_KEYBOARD_COORDINATES = {
     "login_one_button.png": (490, 350),
     "login_two_button.png": (520, 350),
     "login_three_button.png": (550, 350),
@@ -10,3 +13,9 @@ LOGIN_KEYBOARD_COORDINATES = {
     "login_nine_button.png": (750, 350),
     "login_zero_button.png": (790, 350),
 }
+
+
+LOGIN_KEYBOARD_COORDINATES = load_local_coordinates(
+    "login_keyboard",
+    DEFAULT_LOGIN_KEYBOARD_COORDINATES,
+)

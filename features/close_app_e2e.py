@@ -6,7 +6,7 @@ from features.sevenly_login import run as sevenly_login_run
 from features.windows_app_close_app import run as windows_app_close_run
 
 
-# En este caso se cierra el kiosco cuando la bomba esta colgada.
+# En este caso se cierra el kiosco cuando la bomba esta en surtimiento
 def run():
     return run_stages(
         [

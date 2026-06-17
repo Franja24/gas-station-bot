@@ -64,7 +64,7 @@ def run():
 
     save_screenshot("step_1_premium_clicked")
 
-    #STEP 2 - 500
+    #STEP 2 - 1250
     click_asset("amount_1250.png", timeout=10)
 
     assert_image_visible("continue_button.png", confidence=0.80, timeout=10)
