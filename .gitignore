@@ -7,3 +7,6 @@ debug_screen.png
 test.png
 *.pdf
 config/coordinates.local.json
+evidence/
+work/
+outputs/
