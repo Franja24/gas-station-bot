@@ -8,6 +8,7 @@ from features.change_type_charge import run as change_type_charge_run
 from features.close_app_e2e import run as close_app_e2e_run
 from features.close_bump_e2e import run as close_bump_e2e_run
 from features.e2e import run as e2e_run
+from features.e2e_set_5 import run as e2e_set_5_run
 from features.invoice import run as invoice_run
 from features.login import run as login_run
 from features.login_error import run as login_error_run
@@ -32,6 +33,7 @@ CASES = {
     "close_app_e2e": close_app_e2e_run,
     "close_bump_e2e": close_bump_e2e_run,
     "e2e": e2e_run,
+    "e2e_set_5": e2e_set_5_run,
     "kios_011": change_type_charge_run,
     "login": login_run,
     "login_error": login_error_run,
