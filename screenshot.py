@@ -5,6 +5,8 @@ from xml.sax.saxutils import escape
 
 import pyautogui
 
+from screen_capture import capture_target_screen
+
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -36,7 +38,10 @@ def save_screenshot(name):
     prefix = f"{_CURRENT_STAGE}__" if _CURRENT_STAGE else ""
     filename = SCREENSHOTS_FOLDER / f"{prefix}{name}.png"
 
-    screenshot = pyautogui.screenshot()
+    screenshot = capture_target_screen()
+
+    if screenshot is None:
+        screenshot = pyautogui.screenshot()
 
     screenshot.save(str(filename))
 

@@ -53,9 +53,10 @@ class ClickImageTests(unittest.TestCase):
         click_coordinates_mock.assert_called_once_with(700, 385)
 
     @patch("clicker.click_coordinates", return_value=True)
+    @patch("clicker.get_target_screen_size", return_value=None)
     @patch("clicker.find_image")
     def test_uncalibrated_target_uses_safe_image_detection(
-        self, find_image_mock, click_coordinates_mock
+        self, find_image_mock, _target_size_mock, click_coordinates_mock
     ):
         find_image_mock.return_value = SimpleNamespace(x=1000, y=600)
 
@@ -64,6 +65,30 @@ class ClickImageTests(unittest.TestCase):
         self.assertTrue(result)
         find_image_mock.assert_called_once()
         click_coordinates_mock.assert_called_once_with(500, 300)
+
+    @patch("clicker.click_coordinates", return_value=True)
+    @patch("clicker.from_target_screen_coordinates", return_value=(429, 19))
+    @patch("clicker.get_target_screen_size", return_value=(2048, 1152))
+    @patch("clicker.find_image")
+    def test_target_monitor_image_detection_uses_local_click_coordinates(
+        self,
+        find_image_mock,
+        _target_size_mock,
+        from_target_screen_coordinates_mock,
+        click_coordinates_mock,
+    ):
+        find_image_mock.return_value = SimpleNamespace(x=1869, y=-233)
+
+        result = clicker.click_image(
+            "new_button.png",
+            confidence=0.90,
+            use_region=False,
+        )
+
+        self.assertTrue(result)
+        find_image_mock.assert_called_once()
+        from_target_screen_coordinates_mock.assert_called_once_with(1869, -233)
+        click_coordinates_mock.assert_called_once_with(429, 19)
 
     @patch("clicker.find_image", return_value=None)
     def test_missing_uncalibrated_target_stops_flow(self, _find_image_mock):
@@ -87,7 +112,7 @@ class ClickImageTests(unittest.TestCase):
         with self.assertRaises(clicker.ClickError):
             clicker.assert_image_visible("premium.png", timeout=15)
 
-    @patch("clicker.pyautogui.size", return_value=(1440, 900))
+    @patch("clicker.pyautogui.size", return_value=(1, 1))
     def test_click_is_cancelled_when_screen_is_not_calibrated(self, _size_mock):
         with self.assertRaises(clicker.ClickError):
             clicker.click_coordinates(100, 100)

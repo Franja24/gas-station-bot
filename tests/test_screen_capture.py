@@ -6,6 +6,39 @@ import screen_capture
 
 
 class ScreenCaptureTests(unittest.TestCase):
+    @patch(
+        "screen_capture.get_target_monitor",
+        return_value={"left": 1440, "top": -252, "width": 2048, "height": 1152},
+    )
+    def test_target_screen_size_uses_selected_monitor(self, _monitor_mock):
+        self.assertEqual(screen_capture.get_target_screen_size(), (2048, 1152))
+
+    @patch(
+        "screen_capture.get_target_monitor",
+        return_value={"left": 1440, "top": -252, "width": 2048, "height": 1152},
+    )
+    def test_target_coordinates_are_translated_to_global_screen(
+        self,
+        _monitor_mock,
+    ):
+        self.assertEqual(
+            screen_capture.to_target_screen_coordinates(429, 19),
+            (1869, -233),
+        )
+
+    @patch(
+        "screen_capture.get_target_monitor",
+        return_value={"left": 1440, "top": -252, "width": 2048, "height": 1152},
+    )
+    def test_global_coordinates_are_translated_to_target_local(
+        self,
+        _monitor_mock,
+    ):
+        self.assertEqual(
+            screen_capture.from_target_screen_coordinates(1869, -233),
+            (429, 19),
+        )
+
     @patch("screen_capture.capture_screen", return_value="screenshot")
     def test_locate_center_on_monitor_returns_global_coordinates(
         self,

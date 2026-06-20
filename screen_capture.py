@@ -52,6 +52,33 @@ def get_target_monitor():
     return monitors[screen_index]
 
 
+def get_target_screen_size():
+    monitor = get_target_monitor()
+
+    if monitor is None:
+        return None
+
+    return (monitor["width"], monitor["height"])
+
+
+def to_target_screen_coordinates(x, y):
+    monitor = get_target_monitor()
+
+    if monitor is None:
+        return (x, y)
+
+    return (monitor["left"] + x, monitor["top"] + y)
+
+
+def from_target_screen_coordinates(x, y):
+    monitor = get_target_monitor()
+
+    if monitor is None:
+        return (x, y)
+
+    return (x - monitor["left"], y - monitor["top"])
+
+
 def _region_bounds(monitor, region):
     if region is None:
         return dict(monitor)
@@ -92,11 +119,14 @@ def locate_center_on_monitor(image_path, confidence, monitor, region=None):
     screenshot = capture_screen(bounds)
 
     try:
-        location = pyscreeze.locate(
-            str(image_path),
-            screenshot,
-            confidence=confidence,
-        )
+        try:
+            location = pyscreeze.locate(
+                str(image_path),
+                screenshot,
+                confidence=confidence,
+            )
+        except NotImplementedError:
+            location = pyscreeze.locate(str(image_path), screenshot)
     except pyscreeze.ImageNotFoundException:
         return None
 

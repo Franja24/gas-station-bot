@@ -15,6 +15,11 @@ from config.settings import (
     SCREENSHOT_TO_MOUSE_SCALE,
 )
 from detector import find_image
+from screen_capture import (
+    from_target_screen_coordinates,
+    get_target_screen_size,
+    to_target_screen_coordinates,
+)
 
 
 mouse = Controller()
@@ -32,7 +37,10 @@ class ClickError(RuntimeError):
 
 
 def _validate_calibration():
-    current_size = tuple(pyautogui.size())
+    current_size = get_target_screen_size()
+
+    if current_size is None:
+        current_size = tuple(pyautogui.size())
 
     if current_size != REFERENCE_SCREEN_SIZE:
         raise ClickError(
@@ -78,12 +86,18 @@ def click_image(
             "Se canceló el flujo antes de hacer clic."
         )
 
-    x = int(location.x * SCREENSHOT_TO_MOUSE_SCALE)
-    y = int(location.y * SCREENSHOT_TO_MOUSE_SCALE)
+    if get_target_screen_size() is None:
+        x = int(location.x * SCREENSHOT_TO_MOUSE_SCALE)
+        y = int(location.y * SCREENSHOT_TO_MOUSE_SCALE)
+    else:
+        x, y = from_target_screen_coordinates(
+            int(location.x),
+            int(location.y),
+        )
 
     print(
         f"[IMAGE MODE] {image_name} detectado en "
-        f"x={int(location.x)}, y={int(location.y)}; clic en x={x}, y={y}"
+        f"x={int(location.x)}, y={int(location.y)}; clic local en x={x}, y={y}"
     )
 
     return click_coordinates(x, y)
@@ -124,13 +138,15 @@ def click_coordinates(x, y):
             f"límites={width}x{height}"
         )
 
-    print(f"[COORD CLICK] x={x}, y={y}")
+    click_x, click_y = to_target_screen_coordinates(x, y)
 
-    pyautogui.moveTo(x, y, duration=CLICK_MOVE_DURATION)
+    print(f"[COORD CLICK] x={x}, y={y} -> global x={click_x}, y={click_y}")
+
+    pyautogui.moveTo(click_x, click_y, duration=CLICK_MOVE_DURATION)
 
     time.sleep(0.5)
 
-    mouse.position = (x, y)
+    mouse.position = (click_x, click_y)
     mouse.press(Button.left)
 
     time.sleep(CLICK_HOLD_SECONDS)
@@ -153,13 +169,18 @@ def double_click_coordinates(x, y, interval=0.10):
             f"límites={width}x{height}"
         )
 
-    print(f"[COORD DOUBLE CLICK] x={x}, y={y}")
+    click_x, click_y = to_target_screen_coordinates(x, y)
 
-    pyautogui.moveTo(x, y, duration=CLICK_MOVE_DURATION)
+    print(
+        f"[COORD DOUBLE CLICK] x={x}, y={y} "
+        f"-> global x={click_x}, y={click_y}"
+    )
+
+    pyautogui.moveTo(click_x, click_y, duration=CLICK_MOVE_DURATION)
 
     time.sleep(0.5)
 
-    mouse.position = (x, y)
+    mouse.position = (click_x, click_y)
 
     for _ in range(2):
         mouse.press(Button.left)

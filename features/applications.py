@@ -32,6 +32,13 @@ def open_windows_app():
         check=True
     )
 
+    time.sleep(2)
+
+    subprocess.run(
+        ["osascript", "-e", 'tell application "Windows App" to activate'],
+        check=True
+    )
+
     time.sleep(5)
 
     save_screenshot("windows_app_opened")

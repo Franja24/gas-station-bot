@@ -4,6 +4,7 @@ import sys
 from case_runner import run_case
 from features.benefits import run as benefits_run
 from features.cancel_e2e import run as cancel_e2e_run
+from features.cancel_last_operation import run as cancel_last_operation_run
 from features.change_type_charge import run as change_type_charge_run
 from features.close_app_e2e import run as close_app_e2e_run
 from features.close_bump_e2e import run as close_bump_e2e_run
@@ -28,6 +29,7 @@ from features.windows_app_close_hung_up import run as windows_app_close_hung_up_
 
 CASES = {
     "cancel_e2e": cancel_e2e_run,
+    "cancel_last_operation": cancel_last_operation_run,
     "cancel": cancel_run,
     "change_type_charge": change_type_charge_run,
     "close_app_e2e": close_app_e2e_run,

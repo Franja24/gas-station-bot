@@ -9,6 +9,7 @@ from config.settings import (
     DETECTION_POLL_INTERVAL,
     MIN_IMAGE_CONFIDENCE,
 )
+from screen_capture import get_target_monitor, locate_center_on_monitor
 
 
 ASSETS_FOLDER = Path(__file__).resolve().parent / "assets"
@@ -43,15 +44,24 @@ def find_image(
     start_time = time.monotonic()
     previous_location = None
     confirmations = 0
+    target_monitor = get_target_monitor()
 
     while time.monotonic() - start_time < timeout:
 
         try:
-            location = pyautogui.locateCenterOnScreen(
-                str(image_path),
-                confidence=effective_confidence,
-                region=region
-            )
+            if target_monitor is None:
+                location = pyautogui.locateCenterOnScreen(
+                    str(image_path),
+                    confidence=effective_confidence,
+                    region=region,
+                )
+            else:
+                location = locate_center_on_monitor(
+                    image_path,
+                    effective_confidence,
+                    target_monitor,
+                    region=region,
+                )
 
             if location is not None:
                 if (

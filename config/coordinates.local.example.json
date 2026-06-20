@@ -1,4 +1,5 @@
 {
+  "reference_screen_size": [1280, 800],
   "coordinates": {
     "petro_kiosk_app_icon": [429, 19],
     "charge_type_amount_tab.png": [625, 183],

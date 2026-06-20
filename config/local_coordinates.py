@@ -44,6 +44,27 @@ def _normalize_coordinate(section_name, key, value):
     return (x, y)
 
 
+def _normalize_screen_size(value):
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise CoordinateConfigError(
+            "reference_screen_size debe ser una lista [width, height]."
+        )
+
+    width, height = value
+
+    if not isinstance(width, int) or not isinstance(height, int):
+        raise CoordinateConfigError(
+            "reference_screen_size debe usar enteros: [width, height]."
+        )
+
+    if width <= 0 or height <= 0:
+        raise CoordinateConfigError(
+            "reference_screen_size debe usar valores mayores a cero."
+        )
+
+    return (width, height)
+
+
 def load_local_coordinates(section_name, default_coordinates, path=None):
     local_config = _load_local_config(path or LOCAL_COORDINATES_PATH)
     overrides = local_config.get(section_name, {})
@@ -59,3 +80,13 @@ def load_local_coordinates(section_name, default_coordinates, path=None):
         coordinates[key] = _normalize_coordinate(section_name, key, value)
 
     return coordinates
+
+
+def load_reference_screen_size(default_size, path=None):
+    local_config = _load_local_config(path or LOCAL_COORDINATES_PATH)
+    value = local_config.get("reference_screen_size")
+
+    if value is None:
+        return default_size
+
+    return _normalize_screen_size(value)

@@ -4,25 +4,26 @@ from clicker import ClickError, assert_image_visible, click_coordinates, click_i
 from config.settings import SCREENSHOT_TO_MOUSE_SCALE
 from detector import find_image
 from screenshot import save_screenshot
+from screen_capture import from_target_screen_coordinates, get_target_screen_size
 
 
 EMPLOYEE_ID = "2"
 PASSWORD = "123456"
 
 LOGIN_KEYPAD_OFFSETS = {
-    "1": (-301, 53),
-    "2": (-233, 53),
-    "3": (-165, 53),
-    "4": (-97, 53),
-    "5": (-29, 53),
-    "6": (39, 53),
-    "7": (107, 53),
-    "8": (175, 53),
-    "9": (243, 53),
-    "0": (311, 53),
+    "1": (-216, 36),
+    "2": (-168, 36),
+    "3": (-120, 36),
+    "4": (-72, 36),
+    "5": (-24, 36),
+    "6": (24, 36),
+    "7": (72, 36),
+    "8": (120, 36),
+    "9": (168, 36),
+    "0": (216, 36),
 }
 
-PASSWORD_FIELD_OFFSET = (172, -28)
+PASSWORD_FIELD_OFFSET = (122, -18)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -39,34 +40,51 @@ def find_login_form(timeout=10):
     return find_image("login_form_anchor.png", timeout=timeout)
 
 
+def to_local_form_location(form_location):
+    if get_target_screen_size() is None:
+        return (
+            int(form_location.x * SCREENSHOT_TO_MOUSE_SCALE),
+            int(form_location.y * SCREENSHOT_TO_MOUSE_SCALE),
+        )
+
+    return from_target_screen_coordinates(
+        int(form_location.x),
+        int(form_location.y),
+    )
+
+
 def get_login_keypad_centers(form_location):
     if form_location is None:
         raise ClickError(
             "No se encontró el formulario de login para calcular el teclado."
         )
 
+    form_x, form_y = to_local_form_location(form_location)
+
     print(
         "[KEYPAD MODE] Ancla login_form_anchor.png "
-        f"en x={int(form_location.x)}, y={int(form_location.y)}"
+        f"en x={int(form_location.x)}, y={int(form_location.y)}; "
+        f"local x={form_x}, y={form_y}"
     )
 
     centers = {}
 
     for digit, (offset_x, offset_y) in LOGIN_KEYPAD_OFFSETS.items():
-        raw_x = form_location.x + offset_x
-        raw_y = form_location.y + offset_y
+        x = form_x + offset_x
+        y = form_y + offset_y
         centers[digit] = (
-            int(raw_x * SCREENSHOT_TO_MOUSE_SCALE),
-            int(raw_y * SCREENSHOT_TO_MOUSE_SCALE),
+            int(x),
+            int(y),
         )
 
     return centers
 
 
 def click_password_field(form_location):
+    form_x, form_y = to_local_form_location(form_location)
     offset_x, offset_y = PASSWORD_FIELD_OFFSET
-    x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
-    y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
+    x = int(form_x + offset_x)
+    y = int(form_y + offset_y)
 
     print(f"[KEYPAD MODE] Campo contraseña -> x={x}, y={y}")
     click_coordinates(x, y)
