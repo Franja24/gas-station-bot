@@ -8,7 +8,7 @@ import screenshot
 
 
 class ReportTests(unittest.TestCase):
-    def test_result_json_and_pdf_are_generated(self):
+    def test_result_json_pdf_and_excel_are_generated(self):
         result = {
             "run_id": "test_run",
             "case_name": "login",
@@ -29,6 +29,12 @@ class ReportTests(unittest.TestCase):
                     "duration_seconds": 0.5,
                 },
             ],
+            "suite_summary": {
+                "total": 1,
+                "passed": 0,
+                "failed": 1,
+            },
+            "suite_cases": [],
         }
 
         with tempfile.TemporaryDirectory() as temp_directory:
@@ -45,11 +51,14 @@ class ReportTests(unittest.TestCase):
                 ),
             ):
                 result_path = screenshot.save_result(result)
+                excel_path = screenshot.generate_excel_report(result)
                 report_path = screenshot.generate_pdf_report(result)
 
             saved_result = json.loads(result_path.read_text(encoding="utf-8"))
 
             self.assertEqual(saved_result["status"], "FAILED")
+            self.assertTrue(excel_path.is_file())
+            self.assertGreater(excel_path.stat().st_size, 0)
             self.assertTrue(report_path.is_file())
             self.assertGreater(report_path.stat().st_size, 0)
 

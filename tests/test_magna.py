@@ -5,16 +5,23 @@ from features import magna
 
 
 class MagnaFlowTests(unittest.TestCase):
+    @patch("features.magna.handle_benefits_or_payment")
+    @patch(
+        "features.magna.wait_for_benefits_or_payment",
+        return_value="no_benefits",
+    )
     @patch("features.magna.assert_image_visible")
     @patch("features.magna.save_screenshot")
     @patch("features.magna.click_image")
     @patch("features.magna.open_anydesk")
-    def test_magna_completes_payment_without_no_benefits(
+    def test_magna_completes_payment_with_no_benefits_path(
         self,
         open_anydesk_mock,
         click_image_mock,
         save_screenshot_mock,
         assert_image_visible_mock,
+        wait_for_benefits_or_payment_mock,
+        handle_benefits_or_payment_mock,
     ):
         magna.run()
 
@@ -48,9 +55,9 @@ class MagnaFlowTests(unittest.TestCase):
                 ),
             ],
         )
-        self.assertNotIn(
-            call("no_benefits_button.png", timeout=10),
-            click_image_mock.call_args_list,
+        wait_for_benefits_or_payment_mock.assert_called_once_with()
+        handle_benefits_or_payment_mock.assert_called_once_with(
+            "no_benefits"
         )
         self.assertEqual(
             assert_image_visible_mock.call_args_list,
@@ -65,8 +72,8 @@ class MagnaFlowTests(unittest.TestCase):
                 ),
             ],
         )
-        self.assertNotIn(
-            call("step_4_no_benefits_clicked"),
+        self.assertIn(
+            call("step_4_payment_visible"),
             save_screenshot_mock.call_args_list,
         )
 

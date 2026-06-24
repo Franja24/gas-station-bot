@@ -57,7 +57,11 @@ def run():
 
     save_screenshot("step_1_run_dialog_launch_attempt")
 
-    if not wait_for_login_button(timeout=15):
+    if wait_for_login_button(timeout=15):
+        pyautogui.press("esc")
+
+        time.sleep(0.5)
+    else:
         # Fallback por si Windows no encuentra el acceso directo por ruta.
         show_remote_desktop()
 

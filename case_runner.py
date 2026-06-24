@@ -5,6 +5,7 @@ from datetime import datetime
 from screenshot import (
     RUN_FOLDER,
     RUN_ID,
+    generate_excel_report,
     generate_pdf_report,
     save_result,
     save_screenshot,
@@ -68,6 +69,101 @@ def run_stages(stages):
     return {"stages": stage_results}
 
 
+def run_suite(cases):
+    suite_cases = []
+
+    for case_name, case_function in cases:
+        started_at = datetime.now()
+        start_time = time.monotonic()
+        status = "PASSED"
+        error = None
+        traceback_text = None
+        stages = []
+
+        print("")
+        print("=" * 60)
+        print(f"[SUITE] Iniciando: {case_name}")
+        print("=" * 60)
+
+        try:
+            returned_details = case_function()
+            if isinstance(returned_details, dict):
+                stages = returned_details.get("stages", [])
+        except Exception as exc:
+            status = "FAILED"
+            error = f"{type(exc).__name__}: {exc}"
+            traceback_text = traceback.format_exc()
+            if isinstance(exc, StageExecutionError):
+                stages = exc.stages
+
+            print(f"[SUITE] FAILED: {case_name}")
+            print(f"[ERROR] {error}")
+            print(traceback_text)
+
+            set_screenshot_stage(case_name)
+            try:
+                save_screenshot("FAILED_error")
+            except Exception as screenshot_error:
+                print(
+                    "[WARN] No se pudo guardar captura del fallo: "
+                    f"{screenshot_error}"
+                )
+            finally:
+                set_screenshot_stage(None)
+        else:
+            print(f"[SUITE] PASSED: {case_name}")
+
+        duration_seconds = round(time.monotonic() - start_time, 2)
+        suite_cases.append(
+            {
+                "name": case_name,
+                "status": status,
+                "started_at": started_at.isoformat(timespec="seconds"),
+                "duration_seconds": duration_seconds,
+                "error": error,
+                "traceback": traceback_text,
+                "stages": stages,
+            }
+        )
+
+    passed = sum(1 for case in suite_cases if case["status"] == "PASSED")
+    failed = sum(1 for case in suite_cases if case["status"] == "FAILED")
+    total = len(suite_cases)
+    status = "PASSED" if failed == 0 else "FAILED"
+    suite_summary = {
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+    }
+
+    print("")
+    print("=" * 60)
+    print("[SUITE] RESUMEN")
+    print(f"TOTAL: {total}")
+    print(f"PASSED: {passed}")
+    print(f"FAILED: {failed}")
+    print("=" * 60)
+
+    return {
+        "status": status,
+        "error": None if failed == 0 else (
+            f"{failed} of {total} suite cases failed."
+        ),
+        "suite_summary": suite_summary,
+        "suite_cases": suite_cases,
+        "stages": [
+            {
+                "name": case["name"],
+                "status": case["status"],
+                "started_at": case["started_at"],
+                "duration_seconds": case["duration_seconds"],
+                "error": case["error"],
+            }
+            for case in suite_cases
+        ],
+    }
+
+
 def run_case(case_name, case_function):
     started_at = datetime.now()
     start_time = time.monotonic()
@@ -82,6 +178,9 @@ def run_case(case_name, case_function):
         returned_details = case_function()
         if isinstance(returned_details, dict):
             case_details = returned_details
+            if returned_details.get("status") == "FAILED":
+                status = "FAILED"
+                error = returned_details.get("error")
     except Exception as exc:
         status = "FAILED"
         error = f"{type(exc).__name__}: {exc}"
@@ -116,6 +215,8 @@ def run_case(case_name, case_function):
         "error": error,
         "traceback": traceback_text,
         "stages": case_details.get("stages", []),
+        "suite_summary": case_details.get("suite_summary"),
+        "suite_cases": case_details.get("suite_cases", []),
         "pass_criteria": (
             "Case completed without exceptions and all configured "
             "functional validations passed."
@@ -123,6 +224,7 @@ def run_case(case_name, case_function):
     }
 
     save_result(result)
+    generate_excel_report(result)
     generate_pdf_report(result)
 
     print("")

@@ -5,9 +5,15 @@ import case_runner
 
 
 class RunCaseTests(unittest.TestCase):
+    @patch("case_runner.generate_excel_report")
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.save_result")
-    def test_successful_case_is_passed(self, save_result_mock, report_mock):
+    def test_successful_case_is_passed(
+        self,
+        save_result_mock,
+        report_mock,
+        excel_report_mock,
+    ):
         case_function = Mock()
 
         success = case_runner.run_case("login", case_function)
@@ -17,14 +23,17 @@ class RunCaseTests(unittest.TestCase):
         result = save_result_mock.call_args.args[0]
         self.assertEqual(result["status"], "PASSED")
         self.assertIsNone(result["error"])
+        excel_report_mock.assert_called_once_with(result)
         report_mock.assert_called_once_with(result)
 
+    @patch("case_runner.generate_excel_report")
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.save_result")
     def test_successful_e2e_includes_stage_results(
         self,
         save_result_mock,
         _report_mock,
+        _excel_report_mock,
     ):
         stages = [
             {
@@ -43,6 +52,7 @@ class RunCaseTests(unittest.TestCase):
         result = save_result_mock.call_args.args[0]
         self.assertEqual(result["stages"], stages)
 
+    @patch("case_runner.generate_excel_report")
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.save_result")
     @patch("case_runner.save_screenshot")
@@ -51,6 +61,7 @@ class RunCaseTests(unittest.TestCase):
         save_screenshot_mock,
         save_result_mock,
         report_mock,
+        _excel_report_mock,
     ):
         case_function = Mock(side_effect=RuntimeError("screen did not change"))
 
@@ -67,6 +78,7 @@ class RunCaseTests(unittest.TestCase):
         self.assertIn("RuntimeError: screen did not change", result["traceback"])
         report_mock.assert_called_once_with(result)
 
+    @patch("case_runner.generate_excel_report")
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.save_result")
     @patch(
@@ -78,6 +90,7 @@ class RunCaseTests(unittest.TestCase):
         _save_screenshot_mock,
         save_result_mock,
         _report_mock,
+        _excel_report_mock,
     ):
         case_function = Mock(side_effect=ValueError("original error"))
 
@@ -139,6 +152,78 @@ class RunCaseTests(unittest.TestCase):
             [stage["status"] for stage in context.exception.stages],
             ["PASSED", "FAILED"],
         )
+
+    @patch("case_runner.set_screenshot_stage")
+    @patch("case_runner.save_screenshot")
+    def test_run_suite_continues_after_failed_case(
+        self,
+        save_screenshot_mock,
+        _stage_mock,
+    ):
+        first_case = Mock(return_value={"stages": []})
+        failed_case = Mock(side_effect=RuntimeError("payment failed"))
+        last_case = Mock(return_value={"stages": []})
+
+        details = case_runner.run_suite(
+            [
+                ("01_first", first_case),
+                ("02_failed", failed_case),
+                ("03_last", last_case),
+            ]
+        )
+
+        first_case.assert_called_once_with()
+        failed_case.assert_called_once_with()
+        last_case.assert_called_once_with()
+        save_screenshot_mock.assert_called_once_with("FAILED_error")
+        self.assertEqual(details["status"], "FAILED")
+        self.assertEqual(
+            details["suite_summary"],
+            {
+                "total": 3,
+                "passed": 2,
+                "failed": 1,
+            },
+        )
+        self.assertEqual(
+            [case["status"] for case in details["suite_cases"]],
+            ["PASSED", "FAILED", "PASSED"],
+        )
+        self.assertEqual(
+            [stage["name"] for stage in details["stages"]],
+            ["01_first", "02_failed", "03_last"],
+        )
+
+    @patch("case_runner.generate_excel_report")
+    @patch("case_runner.generate_pdf_report")
+    @patch("case_runner.save_result")
+    def test_run_case_marks_failed_suite_as_failed(
+        self,
+        save_result_mock,
+        _report_mock,
+        _excel_report_mock,
+    ):
+        case_function = Mock(
+            return_value={
+                "status": "FAILED",
+                "error": "1 of 3 suite cases failed.",
+                "suite_summary": {
+                    "total": 3,
+                    "passed": 2,
+                    "failed": 1,
+                },
+                "suite_cases": [],
+                "stages": [],
+            }
+        )
+
+        success = case_runner.run_case("e2e_set_5", case_function)
+
+        self.assertFalse(success)
+        result = save_result_mock.call_args.args[0]
+        self.assertEqual(result["status"], "FAILED")
+        self.assertEqual(result["error"], "1 of 3 suite cases failed.")
+        self.assertEqual(result["suite_summary"]["failed"], 1)
 
 
 if __name__ == "__main__":
