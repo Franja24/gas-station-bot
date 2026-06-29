@@ -3,6 +3,7 @@ import time
 import pyautogui
 
 from features.applications import open_anydesk, open_windows_app
+from features.kiosk_process import force_close_kiosk_process
 from features.premium_close_app import close_with_alt_f4
 from screenshot import save_screenshot
 
@@ -43,3 +44,7 @@ def run():
     close_with_alt_f4()
 
     save_screenshot("step_5_alt_f4_close_attempt")
+
+    force_close_kiosk_process()
+
+    save_screenshot("step_6_force_close_attempt")

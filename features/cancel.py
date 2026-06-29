@@ -1,5 +1,7 @@
 import time
 
+import pyautogui
+
 from clicker import assert_image_visible, click_image
 from screenshot import save_screenshot
 
@@ -22,10 +24,22 @@ def click_calibrated(image_name, timeout=10):
     )
 
 
+def click_cancel_service():
+    try:
+        click_asset("cancel_service_button.png", timeout=10)
+        return
+    except Exception:
+        pyautogui.scroll(-5)
+
+        time.sleep(1)
+
+    click_asset("cancel_service_button.png", timeout=10)
+
+
 def run():
     print("Cancelando servicio")
 
-    click_asset("cancel_service_button.png", timeout=10)
+    click_cancel_service()
 
     save_screenshot("step_1_cancel_service_clicked")
 

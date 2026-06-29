@@ -5,6 +5,19 @@ import case_runner
 
 
 class RunCaseTests(unittest.TestCase):
+    def setUp(self):
+        self.after_run_enabled_patcher = patch(
+            "case_runner.is_pos_log_after_run_enabled",
+            return_value=False,
+        )
+        self.copy_pos_log_patcher = patch(
+            "case_runner.copy_latest_pos_log_to_run_folder"
+        )
+        self.after_run_enabled_mock = self.after_run_enabled_patcher.start()
+        self.copy_pos_log_mock = self.copy_pos_log_patcher.start()
+        self.addCleanup(self.after_run_enabled_patcher.stop)
+        self.addCleanup(self.copy_pos_log_patcher.stop)
+
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.generate_excel_report")
     @patch("case_runner.save_result")
@@ -25,6 +38,7 @@ class RunCaseTests(unittest.TestCase):
         self.assertIsNone(result["error"])
         excel_report_mock.assert_called_once()
         report_mock.assert_called_once_with(result)
+        self.copy_pos_log_mock.assert_not_called()
 
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.generate_excel_report")
@@ -194,6 +208,53 @@ class RunCaseTests(unittest.TestCase):
             ["01_first", "02_failed", "03_last"],
         )
 
+    @patch("case_runner.set_screenshot_stage")
+    @patch("case_runner.save_screenshot")
+    def test_run_suite_does_not_count_auxiliary_cleanup_failures(
+        self,
+        save_screenshot_mock,
+        _stage_mock,
+    ):
+        first_case = Mock(return_value={"stages": []})
+        cleanup = Mock(side_effect=RuntimeError("cleanup failed"))
+        second_case = Mock(return_value={"stages": []})
+
+        details = case_runner.run_suite(
+            [
+                ("01_first", first_case),
+                (
+                    "01_5_cleanup",
+                    cleanup,
+                    {"reportable": False, "kind": "cleanup"},
+                ),
+                ("02_second", second_case),
+            ]
+        )
+
+        first_case.assert_called_once_with()
+        cleanup.assert_called_once_with()
+        second_case.assert_called_once_with()
+        save_screenshot_mock.assert_called_once_with("FAILED_error")
+        self.assertEqual(details["status"], "PASSED")
+        self.assertIsNone(details["error"])
+        self.assertEqual(
+            details["suite_summary"],
+            {
+                "total": 2,
+                "passed": 2,
+                "failed": 0,
+            },
+        )
+        self.assertEqual(
+            details["auxiliary_summary"],
+            {
+                "total": 1,
+                "passed": 0,
+                "failed": 1,
+            },
+        )
+        self.assertFalse(details["suite_cases"][1]["reportable"])
+
     @patch("case_runner.generate_pdf_report")
     @patch("case_runner.generate_excel_report")
     @patch("case_runner.save_result")
@@ -224,6 +285,42 @@ class RunCaseTests(unittest.TestCase):
         self.assertEqual(result["status"], "FAILED")
         self.assertEqual(result["error"], "1 of 3 suite cases failed.")
         self.assertEqual(result["suite_summary"]["failed"], 1)
+
+    @patch("case_runner.generate_pdf_report")
+    @patch("case_runner.generate_excel_report")
+    @patch("case_runner.save_result")
+    def test_after_run_copies_pos_log_when_enabled(
+        self,
+        _save_result_mock,
+        _excel_report_mock,
+        _report_mock,
+    ):
+        self.after_run_enabled_mock.return_value = True
+        case_function = Mock()
+
+        success = case_runner.run_case("login", case_function)
+
+        self.assertTrue(success)
+        self.copy_pos_log_mock.assert_called_once_with(
+            run_folder=case_runner.RUN_FOLDER
+        )
+
+    @patch("case_runner.generate_pdf_report")
+    @patch("case_runner.generate_excel_report")
+    @patch("case_runner.save_result")
+    def test_after_run_log_copy_failure_does_not_fail_case(
+        self,
+        _save_result_mock,
+        _excel_report_mock,
+        _report_mock,
+    ):
+        self.after_run_enabled_mock.return_value = True
+        self.copy_pos_log_mock.side_effect = RuntimeError("copy failed")
+        case_function = Mock()
+
+        success = case_runner.run_case("login", case_function)
+
+        self.assertTrue(success)
 
 
 if __name__ == "__main__":

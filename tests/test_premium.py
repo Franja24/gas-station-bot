@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import call, patch
 
+from clicker import ClickError
 from features import premium
 
 
@@ -63,6 +64,63 @@ class PremiumFlowTests(unittest.TestCase):
         save_screenshot_mock.assert_called_once_with(
             "step_4_no_benefits_skipped"
         )
+
+    @patch("features.premium.find_image")
+    def test_wait_for_payment_result_detects_success(self, find_image_mock):
+        find_image_mock.return_value = SimpleNamespace(x=100, y=100)
+
+        self.assertEqual(premium.wait_for_payment_result(), "success")
+
+        find_image_mock.assert_called_once_with(
+            "payment_success.png",
+            timeout=1,
+        )
+
+    @patch("features.premium.find_image")
+    def test_wait_for_payment_result_detects_declined(self, find_image_mock):
+        find_image_mock.side_effect = [
+            None,
+            SimpleNamespace(x=100, y=100),
+        ]
+
+        self.assertEqual(premium.wait_for_payment_result(), "declined")
+
+        self.assertEqual(
+            find_image_mock.call_args_list,
+            [
+                call("payment_success.png", timeout=1),
+                call("payment_declined_title.png", timeout=1),
+            ],
+        )
+
+    @patch("features.premium.save_screenshot")
+    def test_handle_payment_result_keeps_success_flow(
+        self,
+        save_screenshot_mock,
+    ):
+        premium.handle_payment_result("success")
+
+        self.assertEqual(
+            save_screenshot_mock.call_args_list,
+            [
+                call("step_5.1_complete_payment"),
+                call("step_6_payment_success"),
+                call("instructions pumb server"),
+            ],
+        )
+
+    @patch("features.premium.payment_declined_response_run")
+    def test_handle_payment_result_validates_declined_response_and_fails_case(
+        self,
+        payment_declined_response_run_mock,
+    ):
+        with self.assertRaisesRegex(
+            ClickError,
+            "Pago declinado; se validó la metadata",
+        ):
+            premium.handle_payment_result("declined")
+
+        payment_declined_response_run_mock.assert_called_once_with(open_app=False)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,22 @@ import time
 from screenshot import save_screenshot
 
 
+def activate_process(process_name):
+    subprocess.run(
+        [
+            "osascript",
+            "-e",
+            (
+                'tell application "System Events" to set frontmost of '
+                f'process "{process_name}" to true'
+            ),
+        ],
+        check=True,
+    )
+
+    time.sleep(1)
+
+
 def open_anydesk():
     print("[INFO] Abriendo AnyDesk...")
 
@@ -15,6 +31,8 @@ def open_anydesk():
         ["osascript", "-e", 'tell application "AnyDesk" to activate'],
         check=True
     )
+
+    activate_process("AnyDesk")
 
     time.sleep(3)
 
@@ -31,6 +49,8 @@ def open_windows_app():
         ["open", "-a", "Windows App"],
         check=True
     )
+
+    activate_process("Windows App")
 
     time.sleep(5)
 

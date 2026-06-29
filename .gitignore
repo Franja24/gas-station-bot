@@ -7,3 +7,5 @@ debug_screen.png
 test.png
 *.pdf
 config/coordinates.local.json
+api_log*
+pos_build_petro/

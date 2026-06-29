@@ -3,7 +3,11 @@ import time
 from features.applications import open_anydesk
 from clicker import ClickError, assert_image_visible, click_image
 from detector import find_image
+from features.payment_declined_response import run as payment_declined_response_run
 from screenshot import save_screenshot
+
+
+PAYMENT_RESULT_TIMEOUT_SECONDS = 120
 
 
 def click_asset(image_name, timeout=10):
@@ -53,6 +57,49 @@ def handle_benefits_or_payment(current_state=None):
     )
 
 
+def wait_for_payment_result(timeout=PAYMENT_RESULT_TIMEOUT_SECONDS):
+    start_time = time.monotonic()
+
+    while time.monotonic() - start_time < timeout:
+        if find_image("payment_success.png", timeout=1) is not None:
+            return "success"
+
+        if find_image("payment_declined_title.png", timeout=1) is not None:
+            return "declined"
+
+        if find_image(
+            "bank_terminal_instructions_title.png",
+            timeout=1,
+        ) is not None:
+            continue
+
+    raise ClickError(
+        "No apareció payment_success.png ni payment_declined_title.png "
+        "después de enviar el pago."
+    )
+
+
+def handle_payment_result(current_state=None):
+    state = current_state or wait_for_payment_result()
+
+    if state == "success":
+        save_screenshot("step_5.1_complete_payment")
+        save_screenshot("step_6_payment_success")
+        save_screenshot("instructions pumb server")
+        return
+
+    if state == "declined":
+        payment_declined_response_run(open_app=False)
+        raise ClickError(
+            "Pago declinado; se validó la metadata de respuesta del declinado."
+        )
+
+    raise ClickError(
+        "Resultado de pago desconocido: "
+        f"{state}. Se esperaba success o declined."
+    )
+
+
 def run():
     print("Cambiando a AnyDesk")
 
@@ -88,14 +135,4 @@ def run():
 
     save_screenshot("step_5_wait_payment")
 
-    assert_image_visible(
-        "payment_success.png",
-        confidence=0.80,
-        timeout=30
-    )
-
-    save_screenshot("step_5.1_complete_payment")
-
-    save_screenshot("step_6_payment_success")
-
-    save_screenshot("instructions pumb server")
+    handle_payment_result(wait_for_payment_result())

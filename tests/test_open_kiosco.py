@@ -4,7 +4,10 @@ import unittest
 from unittest.mock import call, patch
 
 clicker_stub = types.ModuleType("clicker")
+clicker_stub.ClickError = RuntimeError
 clicker_stub.assert_image_visible = lambda *args, **kwargs: True
+clicker_stub.click_coordinates = lambda *args, **kwargs: True
+clicker_stub.click_image = lambda *args, **kwargs: True
 clicker_stub.double_click_coordinates = lambda *args, **kwargs: True
 
 applications_stub = types.ModuleType("features.applications")
@@ -57,26 +60,36 @@ class OpenKioscoFlowTests(unittest.TestCase):
             [
                 call("command", "r"),
                 call("ctrl", "v"),
+                call("command", "r"),
+                call("ctrl", "v"),
             ],
         )
-        subprocess_run_mock.assert_called_once_with(
-            ["pbcopy"],
-            input=open_kiosco.PETRO_KIOSK_RUN_COMMAND,
-            text=True,
-            check=True,
+        self.assertEqual(
+            subprocess_run_mock.call_args_list,
+            [
+                call(
+                    ["pbcopy"],
+                    input=open_kiosco.REMOTE_WINDOW_CLEANUP_COMMAND,
+                    text=True,
+                    check=True,
+                ),
+                call(
+                    ["pbcopy"],
+                    input=open_kiosco.PETRO_KIOSK_RUN_COMMAND,
+                    text=True,
+                    check=True,
+                ),
+            ],
         )
         self.assertEqual(
             press_mock.call_args_list,
             [
                 call("enter"),
+                call("enter"),
             ],
         )
         double_click_coordinates_mock.assert_not_called()
-        assert_image_visible_mock.assert_called_once_with(
-            "login_button.png",
-            confidence=0.80,
-            timeout=30,
-        )
+        assert_image_visible_mock.assert_not_called()
         save_screenshot_mock.assert_any_call("step_1_run_dialog_launch_attempt")
 
     @patch("features.open_kiosco.assert_image_visible")
@@ -107,6 +120,8 @@ class OpenKioscoFlowTests(unittest.TestCase):
             [
                 call("command", "r"),
                 call("ctrl", "v"),
+                call("command", "r"),
+                call("ctrl", "v"),
                 call("command", "d"),
             ],
         )
@@ -117,6 +132,72 @@ class OpenKioscoFlowTests(unittest.TestCase):
         save_screenshot_mock.assert_any_call(
             "step_3_desktop_icon_launch_attempt"
         )
+
+    @patch("features.open_kiosco.assert_image_visible")
+    @patch("features.open_kiosco.click_image")
+    @patch("features.open_kiosco.find_image")
+    @patch("features.open_kiosco.time.sleep")
+    def test_ensure_login_screen_clicks_iniciar_when_start_screen_is_visible(
+        self,
+        _sleep_mock,
+        find_image_mock,
+        click_image_mock,
+        assert_image_visible_mock,
+    ):
+        find_image_mock.side_effect = [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            object(),
+            None,
+            object(),
+        ]
+
+        result = open_kiosco.ensure_login_screen()
+
+        self.assertTrue(result)
+        click_image_mock.assert_called_once_with(
+            "iniciar.png",
+            confidence=0.85,
+            timeout=5,
+            use_coordinates=False,
+            use_region=False,
+        )
+        assert_image_visible_mock.assert_not_called()
+
+    @patch("features.open_kiosco.find_image")
+    def test_ensure_login_screen_accepts_login_form(
+        self,
+        find_image_mock,
+    ):
+        find_image_mock.side_effect = [
+            None,
+            object(),
+        ]
+
+        result = open_kiosco.ensure_login_screen()
+
+        self.assertTrue(result)
+
+    @patch("features.open_kiosco.find_image")
+    def test_ensure_login_screen_accepts_out_of_service_screen(
+        self,
+        find_image_mock,
+    ):
+        find_image_mock.side_effect = [
+            None,
+            None,
+            None,
+            object(),
+        ]
+
+        result = open_kiosco.ensure_login_screen()
+
+        self.assertTrue(result)
 
 
 if __name__ == "__main__":

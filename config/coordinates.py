@@ -20,6 +20,7 @@ DEFAULT_COORDINATES = {
     "benefits_telefon_number_button.png": (700, 385),
     "telefon_number.png": (700, 385),
     "charge_type_amount_tab.png": (625, 183),
+    "charge_amount_input_field.png": (745, 220),
     "charge_amount_500.png": (752, 263),
     "charge_type_liters_tab.png": (683, 183),
     "charge_liters_20.png": (752, 263),

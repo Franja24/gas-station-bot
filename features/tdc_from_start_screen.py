@@ -1,0 +1,1 @@
+from features.tdc_from_active_session import run_from_start_screen as run

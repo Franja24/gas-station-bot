@@ -3,6 +3,10 @@ import traceback
 from datetime import datetime
 
 from excel_report import generate_excel_report
+from pos_log_collector import (
+    copy_latest_pos_log_to_run_folder,
+    is_pos_log_after_run_enabled,
+)
 from screenshot import (
     RUN_FOLDER,
     RUN_ID,
@@ -22,6 +26,31 @@ class StageExecutionError(RuntimeError):
         self.stage_name = stage_name
         self.stages = stages
         self.original_error = original_error
+
+
+def run_after_run_hooks():
+    if not is_pos_log_after_run_enabled():
+        return
+
+    try:
+        copy_latest_pos_log_to_run_folder(run_folder=RUN_FOLDER)
+    except Exception as exc:
+        print(f"[WARN] No se pudo copiar el log POS: {exc}")
+
+
+def _normalize_suite_case(case):
+    case_name, case_function = case[:2]
+    options = case[2] if len(case) > 2 else {}
+
+    if isinstance(options, bool):
+        options = {"reportable": options}
+
+    return {
+        "name": case_name,
+        "function": case_function,
+        "reportable": options.get("reportable", True),
+        "kind": options.get("kind", "case"),
+    }
 
 
 def run_stages(stages):
@@ -72,7 +101,12 @@ def run_stages(stages):
 def run_suite(cases):
     suite_cases = []
 
-    for case_name, case_function in cases:
+    for case in cases:
+        suite_case = _normalize_suite_case(case)
+        case_name = suite_case["name"]
+        case_function = suite_case["function"]
+        reportable = suite_case["reportable"]
+        kind = suite_case["kind"]
         started_at = datetime.now()
         start_time = time.monotonic()
         status = "PASSED"
@@ -123,33 +157,54 @@ def run_suite(cases):
                 "error": error,
                 "traceback": traceback_text,
                 "stages": stages,
+                "reportable": reportable,
+                "kind": kind,
             }
         )
 
-    passed = sum(1 for case in suite_cases if case["status"] == "PASSED")
-    failed = sum(1 for case in suite_cases if case["status"] == "FAILED")
-    total = len(suite_cases)
+    reportable_cases = [
+        case for case in suite_cases if case.get("reportable", True)
+    ]
+    auxiliary_cases = [
+        case for case in suite_cases if not case.get("reportable", True)
+    ]
+    passed = sum(1 for case in reportable_cases if case["status"] == "PASSED")
+    failed = sum(1 for case in reportable_cases if case["status"] == "FAILED")
+    total = len(reportable_cases)
+    auxiliary_passed = sum(
+        1 for case in auxiliary_cases if case["status"] == "PASSED"
+    )
+    auxiliary_failed = sum(
+        1 for case in auxiliary_cases if case["status"] == "FAILED"
+    )
     status = "PASSED" if failed == 0 else "FAILED"
     suite_summary = {
         "total": total,
         "passed": passed,
         "failed": failed,
     }
+    auxiliary_summary = {
+        "total": len(auxiliary_cases),
+        "passed": auxiliary_passed,
+        "failed": auxiliary_failed,
+    }
 
     print("")
     print("=" * 60)
     print("[SUITE] RESUMEN")
-    print(f"TOTAL: {total}")
-    print(f"PASSED: {passed}")
-    print(f"FAILED: {failed}")
+    print(f"TOTAL FUNCIONAL: {total}")
+    print(f"PASSED FUNCIONAL: {passed}")
+    print(f"FAILED FUNCIONAL: {failed}")
+    print(f"LIMPIEZAS: {auxiliary_passed} PASSED / {auxiliary_failed} FAILED")
     print("=" * 60)
 
     return {
         "status": status,
         "error": None if failed == 0 else (
-            f"{failed} of {total} suite cases failed."
+            f"{failed} of {total} reportable suite cases failed."
         ),
         "suite_summary": suite_summary,
+        "auxiliary_summary": auxiliary_summary,
         "suite_cases": suite_cases,
         "stages": [
             {
@@ -158,6 +213,8 @@ def run_suite(cases):
                 "started_at": case["started_at"],
                 "duration_seconds": case["duration_seconds"],
                 "error": case["error"],
+                "reportable": case.get("reportable", True),
+                "kind": case.get("kind", "case"),
             }
             for case in suite_cases
         ],
@@ -216,6 +273,7 @@ def run_case(case_name, case_function):
         "traceback": traceback_text,
         "stages": case_details.get("stages", []),
         "suite_summary": case_details.get("suite_summary"),
+        "auxiliary_summary": case_details.get("auxiliary_summary"),
         "suite_cases": case_details.get("suite_cases", []),
         "pass_criteria": (
             "Case completed without exceptions and all configured "
@@ -226,6 +284,7 @@ def run_case(case_name, case_function):
     save_result(result)
     generate_excel_report(result, RUN_FOLDER, RUN_ID)
     generate_pdf_report(result)
+    run_after_run_hooks()
 
     print("")
     print("=" * 60)

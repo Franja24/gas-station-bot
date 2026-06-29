@@ -66,14 +66,18 @@ def _case_description(case):
         None,
     )
 
+    prefix = ""
+    if not case.get("reportable", True):
+        prefix = "Limpieza auxiliar. "
+
     if failed_stage:
         error = failed_stage.get("error") or case.get("error") or ""
-        return f"{failed_stage.get('name', 'paso')}: {error}"
+        return f"{prefix}{failed_stage.get('name', 'paso')}: {error}"
 
     if case.get("status") == "PASSED":
-        return "Caso ejecutado correctamente."
+        return f"{prefix}Caso ejecutado correctamente."
 
-    return case.get("error") or "Caso fallido."
+    return f"{prefix}{case.get('error') or 'Caso fallido.'}"
 
 
 def _report_rows(result):
@@ -110,6 +114,7 @@ def _report_rows(result):
 def _sheet_xml(result):
     rows = _report_rows(result)
     summary = result.get("suite_summary") or {}
+    auxiliary_summary = result.get("auxiliary_summary") or {}
     total = summary.get("total", len(rows))
     passed = summary.get(
         "passed",
@@ -119,13 +124,24 @@ def _sheet_xml(result):
         "failed",
         sum(1 for row in rows if row[1] == "FAILED"),
     )
+    auxiliary_passed = auxiliary_summary.get("passed", 0)
+    auxiliary_failed = auxiliary_summary.get("failed", 0)
 
     sheet_rows = [
         _row_xml(1, ["Reporte suite E2E"], style_id=1),
         _row_xml(3, ["Caso", result.get("case_name", "")], style_id=4),
         _row_xml(4, ["Resultado", result.get("status", "")], style_id=4),
-        _row_xml(5, ["Total", total], style_id=4),
-        _row_xml(6, ["Pasaron / Fallaron", f"{passed} / {failed}"], style_id=4),
+        _row_xml(5, ["Total funcional", total], style_id=4),
+        _row_xml(
+            6,
+            ["Pasaron / Fallaron funcionales", f"{passed} / {failed}"],
+            style_id=4,
+        ),
+        _row_xml(
+            7,
+            ["Limpiezas", f"{auxiliary_passed} / {auxiliary_failed}"],
+            style_id=4,
+        ),
         _row_xml(8, REPORT_HEADERS, style_id=1),
     ]
 
