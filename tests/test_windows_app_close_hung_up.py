@@ -32,7 +32,7 @@ class WindowsAppCloseHungUpFlowTests(unittest.TestCase):
     @patch("features.windows_app_close_hung_up.time.sleep")
     @patch("features.windows_app_close_hung_up.open_anydesk")
     @patch("features.windows_app_close_hung_up.open_windows_app")
-    def test_hangs_up_then_returns_to_anydesk_and_closes_kiosk(
+    def test_hangs_off_then_returns_to_anydesk_and_closes_kiosk(
         self,
         open_windows_app_mock,
         open_anydesk_mock,
@@ -48,7 +48,6 @@ class WindowsAppCloseHungUpFlowTests(unittest.TestCase):
             press_mock.call_args_list,
             [
                 call("d"),
-                call("c"),
             ],
         )
         open_anydesk_mock.assert_called_once_with()
@@ -57,9 +56,8 @@ class WindowsAppCloseHungUpFlowTests(unittest.TestCase):
             save_screenshot_mock.call_args_list,
             [
                 call("pump_simulator_descolgar_executed"),
-                call("pump_simulator_colgar_executed"),
                 call("return_anydesk"),
-                call("step_5_alt_f4_close_attempt"),
+                call("step_4_alt_f4_close_attempt"),
             ],
         )
 

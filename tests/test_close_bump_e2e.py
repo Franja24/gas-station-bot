@@ -20,6 +20,14 @@ magna_stub.run = lambda: None
 windows_close_hung_up_stub = types.ModuleType("features.windows_app_close_hung_up")
 windows_close_hung_up_stub.run = lambda: None
 
+windows_hang_up_stub = types.ModuleType("features.windows_app_hang_up")
+windows_hang_up_stub.run = lambda: None
+
+transaction_cancel_recovery_stub = types.ModuleType(
+    "features.transaction_cancel_recovery"
+)
+transaction_cancel_recovery_stub.run = lambda: None
+
 open_kiosco_stub = types.ModuleType("features.open_kiosco")
 open_kiosco_stub.run = lambda: None
 
@@ -29,6 +37,8 @@ _STUBBED_MODULES = {
     "features.sevenly_login": sevenly_login_stub,
     "features.magna": magna_stub,
     "features.windows_app_close_hung_up": windows_close_hung_up_stub,
+    "features.windows_app_hang_up": windows_hang_up_stub,
+    "features.transaction_cancel_recovery": transaction_cancel_recovery_stub,
     "features.open_kiosco": open_kiosco_stub,
 }
 
@@ -54,6 +64,8 @@ if features_package is not None:
         "sevenly_login",
         "magna",
         "windows_app_close_hung_up",
+        "windows_app_hang_up",
+        "transaction_cancel_recovery",
         "open_kiosco",
     ):
         feature_module = getattr(features_package, feature_name, None)
@@ -78,9 +90,10 @@ class CloseBumpE2EFlowTests(unittest.TestCase):
                 "02_login",
                 "03_sevenly_login",
                 "04_magna",
-                "05_windows",
+                "05_close_app_hose_hung_off",
                 "06_open_kiosco",
-                "07_login",
+                "07_hang_up_hose",
+                "08_cancel_transaction_recovery",
             ],
         )
         self.assertEqual(
@@ -92,7 +105,8 @@ class CloseBumpE2EFlowTests(unittest.TestCase):
                 close_bump_e2e.magna_run,
                 close_bump_e2e.windows_app_close_hung_up_run,
                 close_bump_e2e.open_kiosco_run,
-                close_bump_e2e.login_run,
+                close_bump_e2e.windows_app_hang_up_run,
+                close_bump_e2e.transaction_cancel_recovery_run,
             ],
         )
 

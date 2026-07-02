@@ -1,5 +1,6 @@
 from clicker import assert_image_visible, click_image
 from features.applications import open_anydesk
+from features.premium import handle_benefits_or_payment, wait_for_benefits_or_payment
 from screenshot import save_screenshot
 
 
@@ -28,12 +29,18 @@ def run():
 
     # STEP 3 - CONTINUE
     click_asset("continue_button.png", timeout=10)
-    assert_image_visible("card.png", confidence=0.80, timeout=10)
+
+    benefits_state = wait_for_benefits_or_payment()
+
     save_screenshot("step_3_continue_clicked")
 
-    # STEP 4 - PAYMENT
+    # STEP 4 - NO BENEFITS
+
+    handle_benefits_or_payment(benefits_state)
+
+    # STEP 5 - PAYMENT
     click_asset("card.png", timeout=10)
-    save_screenshot("step_4_wait_payment")
+    save_screenshot("step_5_wait_payment")
 
     assert_image_visible(
         "payment_success.png",
@@ -41,6 +48,6 @@ def run():
         timeout=30,
     )
 
-    save_screenshot("step_4.1_complete_payment")
-    save_screenshot("step_5_payment_success")
+    save_screenshot("step_5.1_complete_payment")
+    save_screenshot("step_6_payment_success")
     save_screenshot("instructions pumb server")

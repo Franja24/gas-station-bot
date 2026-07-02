@@ -1,4 +1,4 @@
-@windows_app
+@windows @windows_app
 Feature: Windows App flow
 
   Scenario: Run Windows App pump simulator from Behave

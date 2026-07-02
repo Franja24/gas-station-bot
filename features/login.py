@@ -39,6 +39,32 @@ def find_login_form(timeout=10):
     return find_image("login_form_anchor.png", timeout=timeout)
 
 
+def find_asset(image_name, timeout=2):
+    return find_image(image_name, confidence=0.80, timeout=timeout)
+
+
+def continue_if_already_authenticated():
+    if find_asset("premium.png", timeout=2) is not None:
+        print("[LOGIN] Selección de combustible ya visible")
+        return True
+
+    if find_asset("start.png", timeout=2) is not None:
+        print("[LOGIN] Sesión activa; avanzando desde INICIAR")
+        click_asset("start.png")
+        assert_image_visible("premium.png", confidence=0.80, timeout=15)
+        save_screenshot("00_login_already_authenticated_start")
+        return True
+
+    if find_asset("iniciar.png", timeout=2) is not None:
+        print("[LOGIN] Sesión activa; avanzando desde INICIAR")
+        click_asset("iniciar.png")
+        assert_image_visible("premium.png", confidence=0.80, timeout=15)
+        save_screenshot("00_login_already_authenticated_iniciar")
+        return True
+
+    return False
+
+
 def get_login_keypad_centers(form_location):
     if form_location is None:
         raise ClickError(
@@ -108,6 +134,9 @@ def run():
     print("Cambiando a AnyDesk")
 
     open_anydesk()
+
+    if continue_if_already_authenticated():
+        return
 
     form_location = open_login_form()
 

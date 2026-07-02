@@ -29,12 +29,14 @@ class SevenlyLoginFlowTests(unittest.TestCase):
     @patch("features.sevenly_login.click_coordinates")
     @patch("features.sevenly_login.find_image")
     @patch("features.sevenly_login.click_image")
+    @patch("features.sevenly_login.click_sevenly_account")
     @patch("features.sevenly_login.time.sleep")
     @patch("features.sevenly_login.open_anydesk")
     def test_sevenly_login_enters_phone_and_validates_greeting(
         self,
         open_anydesk_mock,
         _sleep_mock,
+        click_sevenly_account_mock,
         click_image_mock,
         find_image_mock,
         click_coordinates_mock,
@@ -50,15 +52,10 @@ class SevenlyLoginFlowTests(unittest.TestCase):
         sevenly_login.run()
 
         open_anydesk_mock.assert_called_once_with()
+        click_sevenly_account_mock.assert_called_once_with()
         self.assertEqual(
             click_image_mock.call_args_list,
             [
-                call(
-                    "sevenly.png",
-                    timeout=10,
-                    use_coordinates=False,
-                    use_region=False,
-                ),
                 call(
                     "telefon_number.png",
                     timeout=10,
@@ -119,12 +116,14 @@ class SevenlyLoginFlowTests(unittest.TestCase):
     @patch("features.sevenly_login.click_coordinates")
     @patch("features.sevenly_login.find_image")
     @patch("features.sevenly_login.click_image")
+    @patch("features.sevenly_login.click_sevenly_account")
     @patch("features.sevenly_login.time.sleep")
     @patch("features.sevenly_login.open_anydesk")
     def test_sevenly_login_continues_when_phone_is_cached(
         self,
         _open_anydesk_mock,
         _sleep_mock,
+        click_sevenly_account_mock,
         click_image_mock,
         find_image_mock,
         click_coordinates_mock,
@@ -140,6 +139,7 @@ class SevenlyLoginFlowTests(unittest.TestCase):
 
         sevenly_login.run()
 
+        click_sevenly_account_mock.assert_called_once_with()
         click_coordinates_mock.assert_not_called()
         self.assertIn(
             call("step_3_phone_number_already_entered"),
@@ -154,6 +154,36 @@ class SevenlyLoginFlowTests(unittest.TestCase):
                 use_region=False,
             ),
         )
+
+    @patch("features.sevenly_login.save_screenshot")
+    @patch("features.sevenly_login.time.sleep")
+    @patch("features.sevenly_login.click_coordinates")
+    @patch("features.sevenly_login.find_image")
+    def test_click_sevenly_account_uses_top_banner_region(
+        self,
+        find_image_mock,
+        click_coordinates_mock,
+        _sleep_mock,
+        save_screenshot_mock,
+    ):
+        find_image_mock.side_effect = [
+            None,
+            None,
+            SimpleNamespace(x=1434, y=244),
+            None,
+            SimpleNamespace(x=1280, y=770),
+        ]
+
+        sevenly_login.click_sevenly_account()
+
+        find_image_mock.assert_any_call(
+            "sevenly.png",
+            confidence=0.80,
+            timeout=2,
+            region=sevenly_login.SEVENLY_ACCOUNT_REGION,
+        )
+        click_coordinates_mock.assert_called_once_with(557, 122)
+        save_screenshot_mock.assert_called_once_with("step_1_sevenly_clicked")
 
 
 if __name__ == "__main__":

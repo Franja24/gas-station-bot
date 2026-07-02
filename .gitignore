@@ -10,3 +10,5 @@ config/coordinates.local.json
 evidence/
 work/
 outputs/
+api_log_*.txt
+pos_build_petro/

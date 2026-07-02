@@ -41,14 +41,31 @@ def launch_kiosk_from_run_dialog():
     pyautogui.press("enter")
 
 
-def wait_for_login_button(timeout=15):
-    return find_image("login_button.png", confidence=0.80, timeout=timeout) is not None
+def is_kiosk_ready(timeout=3):
+    ready_assets = (
+        "login_button.png",
+        "start.png",
+        "iniciar.png",
+        "purchase_summary_title.png",
+        "premium.png",
+        "magna.png",
+        "amount_1250.png",
+    )
+    for asset in ready_assets:
+        if find_image(asset, confidence=0.80, timeout=timeout) is not None:
+            print(f"[OK] Kiosko listo con asset: {asset}")
+            return True
+    return False
 
 
 def run():
     print("Abriendo Any Desk")
 
     open_anydesk()
+
+    if is_kiosk_ready(timeout=2):
+        save_screenshot("step_0_kiosk_already_ready")
+        return
 
     # STEP 1 - OPEN PETRO KIOSK APP FROM WINDOWS RUN
     launch_kiosk_from_run_dialog()
@@ -57,7 +74,7 @@ def run():
 
     save_screenshot("step_1_run_dialog_launch_attempt")
 
-    if not wait_for_login_button(timeout=15):
+    if not is_kiosk_ready(timeout=15):
         # Fallback por si Windows no encuentra el acceso directo por ruta.
         show_remote_desktop()
 
@@ -69,5 +86,5 @@ def run():
 
         save_screenshot("step_3_desktop_icon_launch_attempt")
 
-    # El kiosko esta listo cuando aparece el boton de login.
-    assert_image_visible("login_button.png", confidence=0.80, timeout=30)
+    if not is_kiosk_ready(timeout=30):
+        assert_image_visible("login_button.png", confidence=0.80, timeout=1)

@@ -20,16 +20,19 @@ sevenly_login_stub.run = lambda: None
 magna_stub = types.ModuleType("features.magna")
 magna_stub.run = lambda: None
 
-windows_close_stub = types.ModuleType("features.windows_app_close_app")
-windows_close_stub.run = lambda: None
+close_app_dispensing_recovery_stub = types.ModuleType(
+    "features.close_app_dispensing_recovery"
+)
+close_app_dispensing_recovery_stub.run = lambda: None
 
 _STUBBED_MODULES = {
     "case_runner": case_runner_stub,
     "features.open_kiosco": open_kiosco_stub,
     "features.login": login_stub,
     "features.sevenly_login": sevenly_login_stub,
-    "features.magna": magna_stub,
-    "features.windows_app_close_app": windows_close_stub,
+    "features.close_app_dispensing_recovery": (
+        close_app_dispensing_recovery_stub
+    ),
 }
 
 _original_modules = {
@@ -53,8 +56,7 @@ if features_package is not None:
         "open_kiosco",
         "login",
         "sevenly_login",
-        "magna",
-        "windows_app_close_app",
+        "close_app_dispensing_recovery",
     ):
         feature_module = getattr(features_package, feature_name, None)
         if feature_module in _STUBBED_MODULES.values():
@@ -77,10 +79,7 @@ class CloseAppE2EFlowTests(unittest.TestCase):
                 "01_open_kiosco",
                 "02_login",
                 "03_sevenly_login",
-                "04_magna",
-                "05_windows_app_close",
-                "06_open_kiosco",
-                "07_login",
+                "04_close_app_dispensing_recovery",
             ],
         )
         self.assertEqual(
@@ -89,10 +88,7 @@ class CloseAppE2EFlowTests(unittest.TestCase):
                 close_app_e2e.open_kiosco_run,
                 close_app_e2e.login_run,
                 close_app_e2e.sevenly_login_run,
-                close_app_e2e.magna_run,
-                close_app_e2e.windows_app_close_run,
-                close_app_e2e.open_kiosco_run,
-                close_app_e2e.login_run,
+                close_app_e2e.close_app_dispensing_recovery_run,
             ],
         )
 

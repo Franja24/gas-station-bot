@@ -1,76 +1,22 @@
+from importlib import import_module
+import os
+
 from behave import given, then, when
 
 
-def run_login():
-    from features.login import run
+def module_runner(module_name, **kwargs):
+    def run_module():
+        module = import_module(f"features.{module_name}")
+        return module.run(**kwargs)
 
-    run()
-
-
-def run_login_error():
-    from features.login_error import run
-
-    run()
+    return run_module
 
 
-def run_magna():
-    from features.magna import run
+def asset_filename(asset_name):
+    if asset_name.endswith(".png"):
+        return asset_name
 
-    run()
-
-
-def run_open_kiosco():
-    from features.open_kiosco import run
-
-    run()
-
-
-def run_premium():
-    from features.premium import run
-
-    run()
-
-
-def run_sevenly_login():
-    from features.sevenly_login import run
-
-    run()
-
-
-def run_invoice():
-    from features.invoice import run
-
-    run(submit_print=False)
-
-
-def run_invoice_full():
-    from features.invoice import run
-
-    run(submit_print=True)
-
-
-def run_print():
-    from features.print import run
-
-    run()
-
-
-def run_windows_app():
-    from features.windows_app import run
-
-    run()
-
-
-def run_windows_app_close():
-    from features.windows_app_close import run
-
-    run()
-
-
-def run_sevenly():
-    from features.sevenly import run
-
-    run()
+    return f"{asset_name}.png"
 
 
 HAPPY_PATH_FLOWS = [
@@ -87,24 +33,63 @@ HAPPY_PATH_FLOWS = [
 
 
 FLOW_RUNNERS = {
-    "login": run_login,
-    "login error": run_login_error,
-    "login_error": run_login_error,
-    "magna": run_magna,
-    "open kiosco": run_open_kiosco,
-    "open_kiosco": run_open_kiosco,
-    "premium": run_premium,
-    "sevenly login": run_sevenly_login,
-    "sevenly_login": run_sevenly_login,
-    "sevenly": run_sevenly,
-    "invoice": run_invoice,
-    "invoice_full": run_invoice_full,
-    "print": run_print,
-    "windows app": run_windows_app,
-    "windows_app": run_windows_app,
-    "windows app close": run_windows_app_close,
-    "windows_app_close": run_windows_app_close,
-    "windows_app_clos": run_windows_app_close,
+    "benefits": module_runner("benefits"),
+    "cancel": module_runner("cancel"),
+    "cancel_e2e": module_runner("cancel_e2e"),
+    "change type charge": module_runner("change_type_charge"),
+    "change_type_charge": module_runner("change_type_charge"),
+    "normal_magna_1250": module_runner(
+        "charge_operation",
+        product="magna",
+        charge_type="amount_1250",
+    ),
+    "normal_premium_500": module_runner(
+        "charge_operation",
+        product="premium",
+        charge_type="amount_500",
+    ),
+    "sevenly_magna_liters_20": module_runner(
+        "charge_operation",
+        product="magna",
+        charge_type="liters_20",
+        use_sevenly=True,
+    ),
+    "close_app_dispensing_recovery": module_runner("close_app_dispensing_recovery"),
+    "close_app_e2e": module_runner("close_app_e2e"),
+    "close_bump_e2e": module_runner("close_bump_e2e"),
+    "declined_transaction_e2e": module_runner("declined_transaction_e2e"),
+    "declined_transaction_request": module_runner("declined_transaction_request"),
+    "e2e": module_runner("e2e"),
+    "invoice": module_runner("invoice", submit_print=False),
+    "invoice_full": module_runner("invoice", submit_print=True),
+    "kios_011": module_runner("change_type_charge"),
+    "login": module_runner("login"),
+    "login error": module_runner("login_error"),
+    "login_error": module_runner("login_error"),
+    "lt_e2e": module_runner("lt_e2e"),
+    "magna": module_runner("magna"),
+    "normal_magna_continue": module_runner("normal_magna_continue"),
+    "normal_magna": module_runner("normal_magna"),
+    "open kiosco": module_runner("open_kiosco"),
+    "open_kiosco": module_runner("open_kiosco"),
+    "premium": module_runner("premium"),
+    "premium_close_app": module_runner("premium_close_app"),
+    "print": module_runner("print"),
+    "sevenly": module_runner("sevenly"),
+    "sevenly_e2e": module_runner("sevenly_e2e"),
+    "sevenly login": module_runner("sevenly_login"),
+    "sevenly_login": module_runner("sevenly_login"),
+    "sevenly_login_error": module_runner("sevenly_login_error"),
+    "sale_confirmation_recovery": module_runner("sale_confirmation_recovery"),
+    "transaction_cancel_recovery": module_runner("transaction_cancel_recovery"),
+    "windows": module_runner("windows_app"),
+    "windows app": module_runner("windows_app"),
+    "windows_app": module_runner("windows_app"),
+    "windows app close": module_runner("windows_app_close"),
+    "windows_app_close": module_runner("windows_app_close"),
+    "windows_app_clos": module_runner("windows_app_close"),
+    "windows_app_close_hung_up": module_runner("windows_app_close_hung_up"),
+    "windows_app_hang_up": module_runner("windows_app_hang_up"),
 }
 
 
@@ -125,16 +110,40 @@ def run_flow(context, flow_name):
         )
 
     print(f"[BEHAVE] Ejecutando flujo: {normalized_flow}")
-    FLOW_RUNNERS[normalized_flow]()
+    try:
+        returned_details = FLOW_RUNNERS[normalized_flow]()
+    except Exception as exc:
+        if hasattr(exc, "stages"):
+            context.behave_stages.extend(exc.stages)
+        context.behave_error = f"{type(exc).__name__}: {exc}"
+        raise
+
+    if isinstance(returned_details, dict):
+        context.behave_stages.extend(returned_details.get("stages", []))
+
     context.last_flow = normalized_flow
     return normalized_flow
 
 
 @given("the automation workspace is ready")
 def step_workspace_ready(context):
+    if not hasattr(context, "remote_desktop_app"):
+        from features.applications import REMOTE_DESKTOP_APP_ENV, use_remote_desktop
+
+        use_remote_desktop(os.environ.get(REMOTE_DESKTOP_APP_ENV, "AnyDesk"))
+
     context.last_flow = None
     context.completed_flows = []
+    context.expected_flows = []
     print("[BEHAVE] Workspace listo")
+
+
+@given('the remote desktop app is "{app_name}"')
+def step_remote_desktop_app(context, app_name):
+    from features.applications import use_remote_desktop
+
+    use_remote_desktop(app_name)
+    context.remote_desktop_app = app_name
 
 
 @when('I run the "{flow_name}" flow')
@@ -147,8 +156,11 @@ def step_run_flows(context):
     if context.table is None:
         raise ValueError("Agrega una tabla Behave con la columna 'flow'")
 
+    context.expected_flows = []
     for row in context.table:
-        context.completed_flows.append(run_flow(context, row["flow"]))
+        normalized_flow = normalize_flow_name(row["flow"])
+        context.expected_flows.append(normalized_flow)
+        context.completed_flows.append(run_flow(context, normalized_flow))
 
 
 @when("I run the happy path")
@@ -156,6 +168,14 @@ def step_run_happy_path(context):
     for flow_name in HAPPY_PATH_FLOWS:
         context.completed_flows.append(run_flow(context, flow_name))
     context.last_flow = "happy_path"
+
+
+@then('the "{asset_name}" asset should be visible')
+def step_asset_should_be_visible(context, asset_name):
+    from clicker import assert_image_visible
+
+    image_name = asset_filename(asset_name)
+    assert_image_visible(image_name, confidence=0.80, timeout=30)
 
 
 @then('the "{flow_name}" flow should finish')
@@ -169,3 +189,12 @@ def step_flow_finished(context, flow_name):
 def step_happy_path_finished(context):
     assert context.completed_flows == HAPPY_PATH_FLOWS
     print("[BEHAVE] Happy path terminado")
+
+
+@then("the selected flows should finish")
+def step_selected_flows_finished(context):
+    if not context.expected_flows:
+        raise AssertionError("No hay flujos seleccionados para validar")
+
+    assert context.completed_flows == context.expected_flows
+    print(f"[BEHAVE] Flujos terminados: {', '.join(context.completed_flows)}")

@@ -16,7 +16,10 @@ class OpenAnyDeskTests(unittest.TestCase):
     ):
         applications.open_anydesk()
 
-        activate_app_mock.assert_called_once_with(applications.ANYDESK_BUNDLE_ID)
+        activate_app_mock.assert_called_once_with(
+            applications.ANYDESK_BUNDLE_ID,
+            "AnyDesk",
+        )
         save_screenshot_mock.assert_called_once_with("anydesk_opened")
 
     @patch("features.applications.time.sleep")
@@ -36,6 +39,103 @@ class OpenAnyDeskTests(unittest.TestCase):
             applications.open_anydesk()
 
         save_screenshot_mock.assert_called_once_with("anydesk_not_frontmost")
+
+    @patch("features.applications.save_screenshot")
+    @patch("features.applications.time.sleep")
+    @patch("features.applications._select_rustdesk_kiosco_tab")
+    @patch("features.applications._raise_rustdesk_window")
+    @patch(
+        "features.applications._rustdesk_window_names",
+        return_value=["RustDesk", "KIOSCO@tpv02-6588 - Remote Desktop - RustDesk"],
+    )
+    @patch("features.applications._activate_app")
+    def test_open_rustdesk_prefers_existing_kiosco_window(
+        self,
+        activate_app_mock,
+        _window_names_mock,
+        raise_window_mock,
+        select_tab_mock,
+        _sleep_mock,
+        save_screenshot_mock,
+    ):
+        applications.use_remote_desktop("rustdesk")
+
+        applications.open_anydesk()
+
+        activate_app_mock.assert_called_once_with(
+            applications.RUSTDESK_BUNDLE_ID,
+            "RustDesk",
+        )
+        raise_window_mock.assert_called_once_with(
+            "KIOSCO@tpv02-6588 - Remote Desktop - RustDesk"
+        )
+        select_tab_mock.assert_called_once_with()
+        save_screenshot_mock.assert_called_once_with("rustdesk_remote_window_opened")
+
+    @patch("features.applications.save_screenshot")
+    @patch("features.applications.time.sleep")
+    @patch("features.applications._select_rustdesk_kiosco_tab")
+    @patch("features.applications._raise_rustdesk_window")
+    @patch(
+        "features.applications._rustdesk_window_names",
+        side_effect=[
+            ["RustDesk"],
+            ["RustDesk", "KIOSCO@tpv02-6588 - Remote Desktop - RustDesk"],
+        ],
+    )
+    @patch(
+        "features.applications._front_rustdesk_window_details",
+        return_value={"name": "RustDesk", "x": 15, "y": 38, "width": 1014, "height": 709},
+    )
+    @patch("features.applications.double_click_coordinates")
+    @patch("features.applications._activate_app")
+    def test_open_rustdesk_connects_first_kiosco_from_home(
+        self,
+        _activate_app_mock,
+        double_click_coordinates_mock,
+        _front_window_mock,
+        _window_names_mock,
+        raise_window_mock,
+        select_tab_mock,
+        _sleep_mock,
+        _save_screenshot_mock,
+    ):
+        applications.use_remote_desktop("rustdesk")
+
+        applications.open_anydesk()
+
+        double_click_coordinates_mock.assert_called_once_with(390, 468)
+        raise_window_mock.assert_called_once_with(
+            "KIOSCO@tpv02-6588 - Remote Desktop - RustDesk"
+        )
+        select_tab_mock.assert_called_once_with()
+
+    @patch("features.applications.save_screenshot")
+    @patch("features.applications.time.sleep")
+    @patch("features.applications._select_rustdesk_kiosco_tab")
+    @patch("features.applications._raise_rustdesk_window")
+    @patch(
+        "features.applications._rustdesk_window_names",
+        return_value=["370897792@tpv02-6588 - Remote Desktop - RustDesk", "RustDesk"],
+    )
+    @patch("features.applications._activate_app")
+    def test_open_rustdesk_selects_kiosco_tab_from_other_remote_tab(
+        self,
+        _activate_app_mock,
+        _window_names_mock,
+        raise_window_mock,
+        select_tab_mock,
+        _sleep_mock,
+        _save_screenshot_mock,
+    ):
+        applications.use_remote_desktop("rustdesk")
+
+        applications.open_anydesk()
+
+        raise_window_mock.assert_called_once_with(
+            "370897792@tpv02-6588 - Remote Desktop - RustDesk"
+        )
+        select_tab_mock.assert_called_once_with()
 
 
 if __name__ == "__main__":

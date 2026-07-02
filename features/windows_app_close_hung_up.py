@@ -7,7 +7,7 @@ from features.premium_close_app import close_with_alt_f4
 from screenshot import save_screenshot
 
 
-# En avalon la bomba esta colgada.
+# Cierra el kiosco mientras la manguera queda descolgada.
 def run():
     print("Cambiando a WindowsApp")
     # STEP 1 - OPEN WINDOWS APP
@@ -24,13 +24,7 @@ def run():
 
     save_screenshot("pump_simulator_descolgar_executed")
 
-    pyautogui.press("c")   # Colgar
-
-    time.sleep(5)
-
-    save_screenshot("pump_simulator_colgar_executed")
-
-    # STEP 4 - RETURN ANYDESK
+    # STEP 3 - RETURN ANYDESK
 
     print("Cambiando a AnyDesk")
 
@@ -38,8 +32,8 @@ def run():
 
     save_screenshot("return_anydesk")
 
-    # STEP 5 - CLOSE APP
+    # STEP 4 - CLOSE APP WHILE HOSE IS HUNG OFF
 
     close_with_alt_f4()
 
-    save_screenshot("step_5_alt_f4_close_attempt")
+    save_screenshot("step_4_alt_f4_close_attempt")
