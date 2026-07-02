@@ -13,6 +13,6 @@ def run():
             ("01_login", login_run),
             ("02_premium", premium_run),
             ("03_windows", windows_run),
-            ("04_invoice", invoice_run),
+            ("04_print", invoice_run),
         ]
     )

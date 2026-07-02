@@ -25,6 +25,17 @@ SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
 _CURRENT_STAGE = None
 
 
+def start_run(run_id=None):
+    global RUN_ID, RUN_FOLDER, SCREENSHOTS_FOLDER, _CURRENT_STAGE
+
+    RUN_ID = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
+    RUN_FOLDER = Path(__file__).resolve().parent / "Evidencias" / f"run_{RUN_ID}"
+    SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
+    _CURRENT_STAGE = None
+
+    return RUN_FOLDER
+
+
 def set_screenshot_stage(stage_name):
     global _CURRENT_STAGE
     _CURRENT_STAGE = stage_name

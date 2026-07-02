@@ -8,8 +8,11 @@ from unittest.mock import patch
 case_runner_stub = types.ModuleType("case_runner")
 case_runner_stub.run_stages = lambda stages: {"stages": []}
 
-login_if_needed_stub = types.ModuleType("features.login_if_needed")
-login_if_needed_stub.run = lambda: None
+login_stub = types.ModuleType("features.login")
+login_stub.run = lambda: None
+
+sevenly_login_stub = types.ModuleType("features.sevenly_login")
+sevenly_login_stub.run = lambda: None
 
 magna_stub = types.ModuleType("features.magna")
 magna_stub.run = lambda: None
@@ -17,15 +20,26 @@ magna_stub.run = lambda: None
 windows_close_hung_up_stub = types.ModuleType("features.windows_app_close_hung_up")
 windows_close_hung_up_stub.run = lambda: None
 
-open_kiosco_ready_stub = types.ModuleType("features.open_kiosco_ready")
-open_kiosco_ready_stub.run = lambda: None
+windows_hang_up_stub = types.ModuleType("features.windows_app_hang_up")
+windows_hang_up_stub.run = lambda: None
+
+transaction_cancel_recovery_stub = types.ModuleType(
+    "features.transaction_cancel_recovery"
+)
+transaction_cancel_recovery_stub.run = lambda: None
+
+open_kiosco_stub = types.ModuleType("features.open_kiosco")
+open_kiosco_stub.run = lambda: None
 
 _STUBBED_MODULES = {
     "case_runner": case_runner_stub,
-    "features.login_if_needed": login_if_needed_stub,
+    "features.login": login_stub,
+    "features.sevenly_login": sevenly_login_stub,
     "features.magna": magna_stub,
     "features.windows_app_close_hung_up": windows_close_hung_up_stub,
-    "features.open_kiosco_ready": open_kiosco_ready_stub,
+    "features.windows_app_hang_up": windows_hang_up_stub,
+    "features.transaction_cancel_recovery": transaction_cancel_recovery_stub,
+    "features.open_kiosco": open_kiosco_stub,
 }
 
 _original_modules = {
@@ -46,10 +60,13 @@ features_package = sys.modules.get("features")
 
 if features_package is not None:
     for feature_name in (
-        "login_if_needed",
+        "login",
+        "sevenly_login",
         "magna",
         "windows_app_close_hung_up",
-        "open_kiosco_ready",
+        "windows_app_hang_up",
+        "transaction_cancel_recovery",
+        "open_kiosco",
     ):
         feature_module = getattr(features_package, feature_name, None)
         if feature_module in _STUBBED_MODULES.values():
@@ -70,22 +87,26 @@ class CloseBumpE2EFlowTests(unittest.TestCase):
             [stage_name for stage_name, _stage_function in stages],
             [
                 "01_open_kiosco",
-                "02_login_if_needed",
-                "03_magna",
-                "04_windows",
-                "05_open_kiosco",
-                "06_login_if_needed",
+                "02_login",
+                "03_sevenly_login",
+                "04_magna",
+                "05_close_app_hose_hung_off",
+                "06_open_kiosco",
+                "07_hang_up_hose",
+                "08_cancel_transaction_recovery",
             ],
         )
         self.assertEqual(
             [stage_function for _stage_name, stage_function in stages],
             [
-                close_bump_e2e.open_kiosco_ready_run,
-                close_bump_e2e.login_if_needed_run,
+                close_bump_e2e.open_kiosco_run,
+                close_bump_e2e.login_run,
+                close_bump_e2e.sevenly_login_run,
                 close_bump_e2e.magna_run,
                 close_bump_e2e.windows_app_close_hung_up_run,
-                close_bump_e2e.open_kiosco_ready_run,
-                close_bump_e2e.login_if_needed_run,
+                close_bump_e2e.open_kiosco_run,
+                close_bump_e2e.windows_app_hang_up_run,
+                close_bump_e2e.transaction_cancel_recovery_run,
             ],
         )
 

@@ -22,6 +22,35 @@ python3 -m venv venv
 source venv/bin/activate
 
 pip install -r requirements.txt
+```
+
+## Ejecución con Behave
+
+Correr todos los flujos:
+
+```bash
+behave
+```
+
+Correr un flujo específico:
+
+```bash
+behave --tags @login
+behave --tags @magna
+behave --tags @premium
+behave --tags @sevenly
+behave --tags @sevenly_login
+behave --tags @invoice
+behave --tags @print
+behave --tags @open_kiosco
+behave --tags @windows_app
+behave --tags @windows_app_close
+behave --tags @happy_path
+```
+
+El tag `@sevenly` corre el camino completo: login, compra premium, simulador de bomba, factura e impresión.
+El tag `@happy_path` corre la suite migrada: apertura de kiosco, login, Magna, Premium, Sevenly login, Windows App, cierre de Windows App, invoice y print.
+En Behave, `@invoice` deja la factura lista para imprimir y `@print` ejecuta la impresión como paso separado.
 
 ## Librerías
 pyautogui
@@ -38,6 +67,8 @@ Procesamiento de imágenes junto con OpenCV.
 Se usa para enviar clicks más compatibles con AnyDesk/RustDesk.
 ## behave
 Permite ejecutar escenarios BDD escritos en lenguaje tipo Gherkin.
+## reportlab
+Genera el reporte PDF con las evidencias de la corrida.
 
 ## Flujo recomendado con Git
 
@@ -45,6 +76,7 @@ Crear una rama propia para calibrar coordenadas:
 
 ```bash
 git checkout -b feature/calibracion-mi-maquina
+```
 
 ## Modo seguro de clic
 

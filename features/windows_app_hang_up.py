@@ -7,20 +7,20 @@ from screenshot import save_screenshot
 
 
 def run():
-    print("Cambiando a WindowsApp para colgar manguera")
+    print("Cambiando a WindowsApp")
 
     open_windows_app()
 
     time.sleep(2)
 
-    pyautogui.press("c")  # Colgar
+    pyautogui.press("c")   # Colgar
 
     time.sleep(5)
 
-    save_screenshot("pump_simulator_colgar_after_kiosk_close")
+    save_screenshot("pump_simulator_colgar_executed")
 
-    print("Regresando a AnyDesk")
+    print("Cambiando a AnyDesk")
 
     open_anydesk()
 
-    save_screenshot("return_anydesk_after_hang_up")
+    save_screenshot("return_anydesk_after_colgar")

@@ -25,6 +25,8 @@ DEFAULT_COORDINATES = {
     "charge_type_liters_tab.png": (683, 183),
     "charge_liters_20.png": (752, 263),
     "finalize_button.png": (770, 520),
+    "invoice_continue_button.png": (770, 520),
+    "print_continue_button.png": (770, 520),
 }
 
 

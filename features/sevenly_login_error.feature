@@ -1,15 +1,7 @@
-Feature: Sevenly Login Error
+@sevenly_login_error
+Feature: Sevenly login error flow
 
-  Scenario: Phone number is not registered in Sevenly benefits
-
-    Given the application is ready
-
-    When we click on the "sevenly" button
-
-    And we click on the "telefon_number" button
-
-    And we enter phone number "5531044840"
-
-    And we click on the "continue" button
-
-    Then the "no_registered_benefits_number" error message should be displayed
+  Scenario: Run Sevenly login error from Behave
+    Given the automation workspace is ready
+    When I run the "sevenly_login_error" flow
+    Then the "sevenly_login_error" flow should finish

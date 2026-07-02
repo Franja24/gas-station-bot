@@ -8,4 +8,8 @@ test.png
 *.pdf
 config/coordinates.local.json
 api_log*
+evidence/
+work/
+outputs/
+api_log_*.txt
 pos_build_petro/

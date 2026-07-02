@@ -1,6 +1,4 @@
 import time
-import pyautogui
-
 from features.applications import open_anydesk
 from clicker import ClickError, assert_image_visible, click_coordinates, click_image
 from config.settings import SCREENSHOT_TO_MOUSE_SCALE
@@ -25,7 +23,6 @@ LOGIN_KEYPAD_OFFSETS = {
 }
 
 PASSWORD_FIELD_OFFSET = (172, -28)
-EMPLOYEE_FIELD_OFFSET = (-172, -28)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -42,19 +39,30 @@ def find_login_form(timeout=10):
     return find_image("login_form_anchor.png", timeout=timeout)
 
 
-def is_product_selection_visible(timeout=2):
-    return find_image("premium.png", confidence=0.80, timeout=timeout) is not None
+def find_asset(image_name, timeout=2):
+    return find_image(image_name, confidence=0.80, timeout=timeout)
 
 
-def enter_from_start_screen(timeout=1):
-    if find_image("iniciar.png", confidence=0.85, timeout=timeout) is None:
-        return False
+def continue_if_already_authenticated():
+    if find_asset("premium.png", timeout=2) is not None:
+        print("[LOGIN] Selección de combustible ya visible")
+        return True
 
-    print("[LOGIN] Pantalla de inicio visible; entrando a selección")
-    click_asset("iniciar.png", timeout=5)
-    time.sleep(2)
+    if find_asset("start.png", timeout=2) is not None:
+        print("[LOGIN] Sesión activa; avanzando desde INICIAR")
+        click_asset("start.png")
+        assert_image_visible("premium.png", confidence=0.80, timeout=15)
+        save_screenshot("00_login_already_authenticated_start")
+        return True
 
-    return True
+    if find_asset("iniciar.png", timeout=2) is not None:
+        print("[LOGIN] Sesión activa; avanzando desde INICIAR")
+        click_asset("iniciar.png")
+        assert_image_visible("premium.png", confidence=0.80, timeout=15)
+        save_screenshot("00_login_already_authenticated_iniciar")
+        return True
+
+    return False
 
 
 def get_login_keypad_centers(form_location):
@@ -90,22 +98,6 @@ def click_password_field(form_location):
     click_coordinates(x, y)
 
 
-def click_employee_field(form_location):
-    offset_x, offset_y = EMPLOYEE_FIELD_OFFSET
-    x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
-    y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
-
-    print(f"[KEYPAD MODE] Campo empleado -> x={x}, y={y}")
-    click_coordinates(x, y)
-
-
-def clear_focused_field():
-    pyautogui.hotkey("ctrl", "a")
-    time.sleep(0.5)
-    pyautogui.press("backspace")
-    time.sleep(0.5)
-
-
 def enter_login_digits(value, keypad_centers):
     for digit in value:
         x, y = keypad_centers[digit]
@@ -116,21 +108,12 @@ def enter_login_digits(value, keypad_centers):
 
 
 def open_login_form(max_attempts=3):
-    if is_product_selection_visible():
-        print("[LOGIN] Sesión activa; selección de combustible visible")
-        return None
-
     for attempt in range(1, max_attempts + 1):
         form_location = find_login_form(timeout=2)
 
         if form_location is not None:
             print("[LOGIN] Formulario de usuario y contraseña visible")
             return form_location
-
-        if enter_from_start_screen():
-            if is_product_selection_visible(timeout=5):
-                print("[LOGIN] Sesión activa; selección de combustible visible")
-                return None
 
         print(f"[LOGIN] Abriendo formulario, intento {attempt}/{max_attempts}")
         click_asset("login_button.png")
@@ -152,28 +135,23 @@ def run():
 
     open_anydesk()
 
-    form_location = open_login_form()
-
-    if form_location is None:
-        save_screenshot("00_login_already_active")
+    if continue_if_already_authenticated():
         return
+
+    form_location = open_login_form()
 
     save_screenshot("01_login_start")
 
     keypad_centers = get_login_keypad_centers(form_location)
 
     # STEP  2 SCREEN LOGIN
-    click_employee_field(form_location)
-
-    clear_focused_field()
-
     enter_login_digits(EMPLOYEE_ID, keypad_centers)
 
     #  campo de texto password
 
     click_password_field(form_location)
 
-    clear_focused_field()
+    time.sleep(1)
 
     # INGRESA PASSWORD
     enter_login_digits(PASSWORD, keypad_centers)
