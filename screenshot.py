@@ -23,15 +23,17 @@ RUN_FOLDER = Path(__file__).resolve().parent / "Evidencias" / f"run_{RUN_ID}"
 SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
 
 _CURRENT_STAGE = None
+_CURRENT_CASE = None
 
 
 def start_run(run_id=None):
-    global RUN_ID, RUN_FOLDER, SCREENSHOTS_FOLDER, _CURRENT_STAGE
+    global RUN_ID, RUN_FOLDER, SCREENSHOTS_FOLDER, _CURRENT_STAGE, _CURRENT_CASE
 
     RUN_ID = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     RUN_FOLDER = Path(__file__).resolve().parent / "Evidencias" / f"run_{RUN_ID}"
     SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
     _CURRENT_STAGE = None
+    _CURRENT_CASE = None
 
     return RUN_FOLDER
 
@@ -41,11 +43,21 @@ def set_screenshot_stage(stage_name):
     _CURRENT_STAGE = stage_name
 
 
+def set_screenshot_case(case_id):
+    global _CURRENT_CASE
+    _CURRENT_CASE = case_id
+
+
 def save_screenshot(name):
     SCREENSHOTS_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    prefix = f"{_CURRENT_STAGE}__" if _CURRENT_STAGE else ""
-    filename = SCREENSHOTS_FOLDER / f"{prefix}{name}.png"
+    prefix_parts = []
+    if _CURRENT_CASE:
+        prefix_parts.append(_CURRENT_CASE)
+    if _CURRENT_STAGE:
+        prefix_parts.append(_CURRENT_STAGE)
+    prefix_parts.append(name)
+    filename = SCREENSHOTS_FOLDER / f"{'__'.join(prefix_parts)}.png"
 
     screenshot = pyautogui.screenshot()
 
@@ -71,6 +83,44 @@ def save_result(result):
     return result_path
 
 
+def _case_label(test_case):
+    case_id = test_case.get("id")
+    case_name = test_case.get("name") or test_case.get("flow") or ""
+
+    if case_id and case_name:
+        return f"{case_id} - {case_name}"
+    return case_id or case_name or "Caso"
+
+
+def _stage_line(stage):
+    return (
+        f"{escape(stage.get('name', 'stage'))}: "
+        f"{escape(stage.get('status', 'UNKNOWN'))} "
+        f"({stage.get('duration_seconds', 0)} seconds)"
+    )
+
+
+def _status_color(status):
+    if status == "PASSED":
+        return colors.green
+    if status == "FAILED":
+        return colors.red
+    return colors.orange
+
+
+def _add_stage_list(elements, styles, stages, style_prefix):
+    for index, stage in enumerate(stages, start=1):
+        stage_status = stage.get("status", "UNKNOWN")
+        stage_color = _status_color(stage_status)
+        stage_style = ParagraphStyle(
+            f"{style_prefix}-{index}",
+            parent=styles["Normal"],
+            leftIndent=18,
+            textColor=stage_color,
+        )
+        elements.append(Paragraph(_stage_line(stage), stage_style))
+
+
 def generate_pdf_report(result=None):
     RUN_FOLDER.mkdir(parents=True, exist_ok=True)
 
@@ -93,7 +143,7 @@ def generate_pdf_report(result=None):
 
     if result is not None:
         status = result["status"]
-        status_color = colors.green if status == "PASSED" else colors.red
+        status_color = _status_color(status)
         status_style = ParagraphStyle(
             "Status",
             parent=styles["Heading1"],
@@ -124,32 +174,50 @@ def generate_pdf_report(result=None):
 
         elements.append(Spacer(1, 20))
 
-        if result.get("stages"):
-            elements.append(Paragraph("Stages", styles["Heading2"]))
+        background_stages = result.get("background_stages") or []
+        test_cases = result.get("test_cases") or []
 
-            for stage in result["stages"]:
-                stage_status = stage["status"]
-                stage_color = (
-                    colors.green if stage_status == "PASSED" else colors.red
-                )
-                stage_style = ParagraphStyle(
-                    f"Stage-{stage['name']}",
-                    parent=styles["Normal"],
-                    textColor=stage_color,
+        if background_stages:
+            elements.append(Paragraph("Background", styles["Heading2"]))
+            _add_stage_list(elements, styles, background_stages, "Background")
+            elements.append(Spacer(1, 12))
+
+        if test_cases:
+            elements.append(Paragraph("Test Cases", styles["Heading2"]))
+
+            for case_index, test_case in enumerate(test_cases, start=1):
+                case_status = test_case.get("status", "UNKNOWN")
+                case_color = _status_color(case_status)
+                case_style = ParagraphStyle(
+                    f"TestCase-{case_index}",
+                    parent=styles["Heading3"],
+                    textColor=case_color,
                 )
                 elements.append(
                     Paragraph(
-                        f"{escape(stage['name'])}: {escape(stage_status)} "
-                        f"({stage['duration_seconds']} seconds)",
-                        stage_style,
+                        f"{escape(_case_label(test_case))}: {escape(case_status)} "
+                        f"({test_case.get('duration_seconds', 0)} seconds)",
+                        case_style,
                     )
                 )
+                _add_stage_list(
+                    elements,
+                    styles,
+                    test_case.get("stages", []),
+                    f"TestCase-{case_index}-Stage",
+                )
+                elements.append(Spacer(1, 8))
 
+            elements.append(Spacer(1, 12))
+
+        elif result.get("stages"):
+            elements.append(Paragraph("Stages", styles["Heading2"]))
+            _add_stage_list(elements, styles, result["stages"], "Stage")
             elements.append(Spacer(1, 20))
 
     screenshots = sorted(
         SCREENSHOTS_FOLDER.glob("*.png"),
-        key=lambda x: x.stat().st_mtime
+        key=lambda x: x.name,
     )
 
 

@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 
 import screenshot
+from excel_report import generate_excel_report
 
 
 def _scenario_slug(scenario):
@@ -25,6 +26,8 @@ def before_scenario(context, scenario):
     context.behave_scenario_started_at = datetime.now()
     context.behave_scenario_started_time = time.monotonic()
     context.behave_stages = []
+    context.behave_background_stages = []
+    context.behave_test_cases = []
     context.behave_error = None
 
     print(f"[BEHAVE] Evidencia: {screenshot.RUN_FOLDER.resolve()}")
@@ -56,6 +59,8 @@ def after_scenario(context, scenario):
         "error": error,
         "traceback": None,
         "stages": getattr(context, "behave_stages", []),
+        "background_stages": getattr(context, "behave_background_stages", []),
+        "test_cases": getattr(context, "behave_test_cases", []),
         "pass_criteria": (
             "Behave scenario completed without failed steps and all configured "
             "functional validations passed."
@@ -63,4 +68,5 @@ def after_scenario(context, scenario):
     }
 
     screenshot.save_result(result)
+    generate_excel_report(result, screenshot.RUN_FOLDER, screenshot.RUN_ID)
     screenshot.generate_pdf_report(result)

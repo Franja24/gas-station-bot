@@ -56,6 +56,62 @@ class ExcelReportTests(unittest.TestCase):
         self.assertIn("2026-06-18", sheet_xml)
         self.assertIn("11:17:29", sheet_xml)
 
+    def test_generates_behave_report_with_test_cases_and_stages(self):
+        result = {
+            "run_id": "20260702_170924",
+            "case_name": "Run migrated happy path from Behave",
+            "status": "PASSED",
+            "started_at": "2026-07-02T17:09:24",
+            "test_cases": [
+                {
+                    "id": "TC01",
+                    "name": "normal_magna_1250",
+                    "status": "PASSED",
+                    "started_at": "2026-07-02T17:10:00",
+                    "stages": [
+                        {
+                            "name": "00_prepare_product_selection",
+                            "status": "PASSED",
+                        },
+                        {
+                            "name": "05_windows_app_and_finalize",
+                            "status": "PASSED",
+                        },
+                    ],
+                },
+                {
+                    "id": "TC02",
+                    "name": "normal_premium_500",
+                    "status": "PASSED",
+                    "started_at": "2026-07-02T17:12:00",
+                    "stages": [
+                        {
+                            "name": "00_prepare_product_selection",
+                            "status": "PASSED",
+                        }
+                    ],
+                },
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as temp_directory:
+            report_path = generate_excel_report(
+                result,
+                Path(temp_directory),
+                "20260702_170924",
+            )
+
+            with ZipFile(report_path) as workbook:
+                sheet_xml = workbook.read(
+                    "xl/worksheets/sheet1.xml"
+                ).decode("utf-8")
+
+        self.assertIn("TC01", sheet_xml)
+        self.assertIn("TC02", sheet_xml)
+        self.assertIn("normal_magna_1250", sheet_xml)
+        self.assertIn("00_prepare_product_selection", sheet_xml)
+        self.assertIn("Stage ejecutado correctamente.", sheet_xml)
+
 
 if __name__ == "__main__":
     unittest.main()

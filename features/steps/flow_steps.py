@@ -1,7 +1,10 @@
 from importlib import import_module
 import os
+import time
+from datetime import datetime
 
 from behave import given, then, when
+import screenshot
 
 
 def module_runner(module_name, **kwargs):
@@ -99,7 +102,51 @@ def normalize_flow_name(flow_name):
     return " ".join(normalized_flow.split())
 
 
-def run_flow(context, flow_name):
+def table_value(row, column_name, default=None):
+    try:
+        value = row[column_name]
+    except (KeyError, IndexError, TypeError):
+        if hasattr(row, "get"):
+            value = row.get(column_name, default)
+        else:
+            value = default
+
+    if value is None:
+        return default
+
+    value = str(value).strip()
+    return value if value else default
+
+
+def _append_behave_case(
+    context,
+    case_id,
+    flow_name,
+    started_at,
+    start_time,
+    status,
+    stages,
+    error=None,
+    case_name=None,
+):
+    if not hasattr(context, "behave_test_cases"):
+        context.behave_test_cases = []
+
+    context.behave_test_cases.append(
+        {
+            "id": case_id,
+            "name": case_name or flow_name,
+            "flow": flow_name,
+            "status": status,
+            "started_at": started_at.isoformat(timespec="seconds"),
+            "duration_seconds": round(time.monotonic() - start_time, 2),
+            "error": error,
+            "stages": stages,
+        }
+    )
+
+
+def run_flow(context, flow_name, case_id=None, case_name=None):
     normalized_flow = normalize_flow_name(flow_name)
 
     if normalized_flow not in FLOW_RUNNERS:
@@ -109,17 +156,66 @@ def run_flow(context, flow_name):
             f"Disponibles: {available_flows}"
         )
 
+    started_at = datetime.now()
+    start_time = time.monotonic()
+    screenshot_case = f"{case_id}_{normalized_flow}" if case_id else None
+
+    if screenshot_case:
+        screenshot.set_screenshot_case(screenshot_case)
+
     print(f"[BEHAVE] Ejecutando flujo: {normalized_flow}")
     try:
         returned_details = FLOW_RUNNERS[normalized_flow]()
     except Exception as exc:
+        stages = []
         if hasattr(exc, "stages"):
-            context.behave_stages.extend(exc.stages)
+            stages = exc.stages
+            context.behave_stages.extend(stages)
+        if case_id:
+            _append_behave_case(
+                context,
+                case_id,
+                normalized_flow,
+                started_at,
+                start_time,
+                "FAILED",
+                stages,
+                f"{type(exc).__name__}: {exc}",
+                case_name,
+            )
         context.behave_error = f"{type(exc).__name__}: {exc}"
         raise
+    finally:
+        if screenshot_case:
+            screenshot.set_screenshot_case(None)
 
     if isinstance(returned_details, dict):
-        context.behave_stages.extend(returned_details.get("stages", []))
+        stages = returned_details.get("stages", [])
+        context.behave_stages.extend(stages)
+        if case_id:
+            _append_behave_case(
+                context,
+                case_id,
+                normalized_flow,
+                started_at,
+                start_time,
+                "PASSED",
+                stages,
+                case_name=case_name,
+            )
+    else:
+        stages = []
+        if case_id:
+            _append_behave_case(
+                context,
+                case_id,
+                normalized_flow,
+                started_at,
+                start_time,
+                "PASSED",
+                stages,
+                case_name=case_name,
+            )
 
     context.last_flow = normalized_flow
     return normalized_flow
@@ -135,6 +231,8 @@ def step_workspace_ready(context):
     context.last_flow = None
     context.completed_flows = []
     context.expected_flows = []
+    context.behave_test_cases = []
+    context.behave_background_stages = []
     print("[BEHAVE] Workspace listo")
 
 
@@ -157,10 +255,73 @@ def step_run_flows(context):
         raise ValueError("Agrega una tabla Behave con la columna 'flow'")
 
     context.expected_flows = []
-    for row in context.table:
-        normalized_flow = normalize_flow_name(row["flow"])
+    context.behave_background_stages = list(
+        getattr(context, "behave_stages", [])
+    )
+    for index, row in enumerate(context.table, start=1):
+        case_id = table_value(row, "case_id", f"TC{index:02d}")
+        checkpoint = table_value(row, "checkpoint")
+        flow_name = table_value(row, "flow")
+        if not flow_name:
+            raise ValueError("Agrega una tabla Behave con la columna 'flow'")
+
+        normalized_flow = normalize_flow_name(flow_name)
         context.expected_flows.append(normalized_flow)
-        context.completed_flows.append(run_flow(context, normalized_flow))
+        context.completed_flows.append(
+            run_flow(
+                context,
+                normalized_flow,
+                case_id=case_id,
+                case_name=checkpoint,
+            )
+        )
+
+
+@when("I register these assisted checkpoints")
+def step_register_assisted_checkpoints(context):
+    if context.table is None:
+        raise ValueError("Agrega una tabla Behave con la columna 'case_id'")
+
+    context.expected_assisted_checkpoints = []
+
+    for index, row in enumerate(context.table, start=1):
+        case_id = table_value(row, "case_id", f"BOT_HUMANO_{index:02d}")
+        checkpoint = table_value(row, "checkpoint", case_id)
+        bot_scope = table_value(row, "bot_scope", "Evidencia visual y navegación")
+        human_scope = table_value(row, "human_scope", "Validación humana requerida")
+        started_at = datetime.now()
+
+        context.expected_assisted_checkpoints.append(case_id)
+        if not hasattr(context, "behave_test_cases"):
+            context.behave_test_cases = []
+
+        context.behave_test_cases.append(
+            {
+                "id": case_id,
+                "name": checkpoint,
+                "flow": "bot_humano",
+                "status": "ASSISTED",
+                "started_at": started_at.isoformat(timespec="seconds"),
+                "duration_seconds": 0,
+                "error": None,
+                "stages": [
+                    {
+                        "name": "bot_scope",
+                        "status": "ASSISTED",
+                        "started_at": started_at.isoformat(timespec="seconds"),
+                        "duration_seconds": 0,
+                        "error": bot_scope,
+                    },
+                    {
+                        "name": "human_scope",
+                        "status": "PENDING_HUMAN",
+                        "started_at": started_at.isoformat(timespec="seconds"),
+                        "duration_seconds": 0,
+                        "error": human_scope,
+                    },
+                ],
+            }
+        )
 
 
 @when("I run the happy path")
@@ -198,3 +359,19 @@ def step_selected_flows_finished(context):
 
     assert context.completed_flows == context.expected_flows
     print(f"[BEHAVE] Flujos terminados: {', '.join(context.completed_flows)}")
+
+
+@then("the assisted checkpoints should be documented")
+def step_assisted_checkpoints_documented(context):
+    expected = getattr(context, "expected_assisted_checkpoints", [])
+    if not expected:
+        raise AssertionError("No hay checkpoints asistidos para validar")
+
+    documented = [
+        case["id"]
+        for case in getattr(context, "behave_test_cases", [])
+        if case.get("status") == "ASSISTED"
+    ]
+
+    assert documented == expected
+    print(f"[BEHAVE] Checkpoints asistidos documentados: {', '.join(documented)}")

@@ -71,6 +71,7 @@ class ReportTests(unittest.TestCase):
                     return_value=image,
                 ),
             ):
+                screenshot.set_screenshot_case(None)
                 screenshot.set_screenshot_stage("02_premium")
                 screenshot_path = screenshot.save_screenshot("anydesk_opened")
                 screenshot.set_screenshot_stage(None)
@@ -78,6 +79,36 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(
             screenshot_path.name,
             "02_premium__anydesk_opened.png",
+        )
+        image.save.assert_called_once()
+
+    def test_screenshot_name_includes_current_case_and_stage(self):
+        image = Mock()
+
+        with tempfile.TemporaryDirectory() as temp_directory:
+            screenshots_folder = Path(temp_directory)
+
+            with (
+                patch.object(
+                    screenshot,
+                    "SCREENSHOTS_FOLDER",
+                    screenshots_folder,
+                ),
+                patch.object(
+                    screenshot.pyautogui,
+                    "screenshot",
+                    return_value=image,
+                ),
+            ):
+                screenshot.set_screenshot_case("TC01_normal_magna_1250")
+                screenshot.set_screenshot_stage("00_prepare_product_selection")
+                screenshot_path = screenshot.save_screenshot("ready")
+                screenshot.set_screenshot_stage(None)
+                screenshot.set_screenshot_case(None)
+
+        self.assertEqual(
+            screenshot_path.name,
+            "TC01_normal_magna_1250__00_prepare_product_selection__ready.png",
         )
         image.save.assert_called_once()
 

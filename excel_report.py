@@ -3,7 +3,14 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
-REPORT_HEADERS = ["ID del caso", "Estatus", "Descripción", "Día", "Hora"]
+REPORT_HEADERS = [
+    "ID del caso",
+    "Stage",
+    "Estatus",
+    "Descripción",
+    "Día",
+    "Hora",
+]
 
 
 def _cell_ref(row_number, column_number):
@@ -80,15 +87,28 @@ def _case_description(case):
     return f"{prefix}{case.get('error') or 'Caso fallido.'}"
 
 
-def _report_rows(result):
-    suite_cases = result.get("suite_cases") or []
+def _stage_description(stage):
+    if stage.get("status") == "PASSED":
+        return "Stage ejecutado correctamente."
 
-    if suite_cases:
+    return stage.get("error") or "Stage fallido."
+
+
+def _case_id(case, fallback_index):
+    return case.get("id") or case.get("name") or f"TC{fallback_index:02d}"
+
+
+def _report_rows(result):
+    test_cases = result.get("test_cases") or []
+
+    if test_cases:
         rows = []
-        for case in suite_cases:
+        for index, case in enumerate(test_cases, start=1):
             day, time = _split_datetime(case.get("started_at"))
+            case_id = _case_id(case, index)
             rows.append(
                 [
+                    case_id,
                     case.get("name", ""),
                     case.get("status", ""),
                     _case_description(case),
@@ -97,12 +117,57 @@ def _report_rows(result):
                 ]
             )
 
+            for stage in case.get("stages", []):
+                rows.append(
+                    [
+                        case_id,
+                        stage.get("name", ""),
+                        stage.get("status", ""),
+                        _stage_description(stage),
+                        day,
+                        time,
+                    ]
+                )
+
+        return rows
+
+    suite_cases = result.get("suite_cases") or []
+
+    if suite_cases:
+        rows = []
+        for index, case in enumerate(suite_cases, start=1):
+            day, time = _split_datetime(case.get("started_at"))
+            case_id = _case_id(case, index)
+            rows.append(
+                [
+                    case_id,
+                    case.get("name", ""),
+                    case.get("status", ""),
+                    _case_description(case),
+                    day,
+                    time,
+                ]
+            )
+
+            for stage in case.get("stages", []):
+                rows.append(
+                    [
+                        case_id,
+                        stage.get("name", ""),
+                        stage.get("status", ""),
+                        _stage_description(stage),
+                        day,
+                        time,
+                    ]
+                )
+
         return rows
 
     day, time = _split_datetime(result.get("started_at"))
-    return [
+    rows = [
         [
             result.get("case_name", ""),
+            "",
             result.get("status", ""),
             _case_description(result),
             day,
@@ -110,19 +175,44 @@ def _report_rows(result):
         ]
     ]
 
+    for stage in result.get("stages", []):
+        rows.append(
+            [
+                result.get("case_name", ""),
+                stage.get("name", ""),
+                stage.get("status", ""),
+                _stage_description(stage),
+                day,
+                time,
+            ]
+        )
+
+    return rows
+
 
 def _sheet_xml(result):
     rows = _report_rows(result)
     summary = result.get("suite_summary") or {}
     auxiliary_summary = result.get("auxiliary_summary") or {}
-    total = summary.get("total", len(rows))
+    test_cases = result.get("test_cases") or []
+    suite_cases = result.get("suite_cases") or []
+    top_level_count = len(test_cases) or len(suite_cases) or 1
+    total = summary.get("total", top_level_count)
     passed = summary.get(
         "passed",
-        sum(1 for row in rows if row[1] == "PASSED"),
+        sum(1 for case in test_cases if case.get("status") == "PASSED")
+        if test_cases
+        else sum(1 for case in suite_cases if case.get("status") == "PASSED")
+        if suite_cases
+        else 1 if result.get("status") == "PASSED" else 0,
     )
     failed = summary.get(
         "failed",
-        sum(1 for row in rows if row[1] == "FAILED"),
+        sum(1 for case in test_cases if case.get("status") == "FAILED")
+        if test_cases
+        else sum(1 for case in suite_cases if case.get("status") == "FAILED")
+        if suite_cases
+        else 1 if result.get("status") == "FAILED" else 0,
     )
     auxiliary_passed = auxiliary_summary.get("passed", 0)
     auxiliary_failed = auxiliary_summary.get("failed", 0)
@@ -146,7 +236,7 @@ def _sheet_xml(result):
     ]
 
     for offset, row in enumerate(rows, start=9):
-        style_id = 3 if row[1] == "PASSED" else 2 if row[1] == "FAILED" else None
+        style_id = 3 if row[2] == "PASSED" else 2 if row[2] == "FAILED" else None
         sheet_rows.append(_row_xml(offset, row, style_id=style_id, row_height=48))
 
     last_row = 8 + len(rows)
@@ -154,7 +244,7 @@ def _sheet_xml(result):
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A1:E{last_row}"/>
+  <dimension ref="A1:F{last_row}"/>
   <sheetViews>
     <sheetView workbookViewId="0">
       <pane ySplit="8" topLeftCell="A9" activePane="bottomLeft" state="frozen"/>
@@ -162,16 +252,17 @@ def _sheet_xml(result):
     </sheetView>
   </sheetViews>
   <cols>
-    <col min="1" max="1" width="22" customWidth="1"/>
-    <col min="2" max="2" width="14" customWidth="1"/>
-    <col min="3" max="3" width="88" customWidth="1"/>
-    <col min="4" max="4" width="16" customWidth="1"/>
-    <col min="5" max="5" width="13" customWidth="1"/>
+    <col min="1" max="1" width="18" customWidth="1"/>
+    <col min="2" max="2" width="36" customWidth="1"/>
+    <col min="3" max="3" width="14" customWidth="1"/>
+    <col min="4" max="4" width="88" customWidth="1"/>
+    <col min="5" max="5" width="16" customWidth="1"/>
+    <col min="6" max="6" width="13" customWidth="1"/>
   </cols>
   <sheetData>
     {"".join(sheet_rows)}
   </sheetData>
-  <autoFilter ref="A8:E{last_row}"/>
+  <autoFilter ref="A8:F{last_row}"/>
 </worksheet>"""
 
 
