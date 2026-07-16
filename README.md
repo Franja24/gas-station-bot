@@ -78,6 +78,25 @@ Crear una rama propia para calibrar coordenadas:
 git checkout -b feature/calibracion-mi-maquina
 ```
 
+## Camino Windows
+
+En Lenovo o cualquier PC con Windows, activa el camino alterno con:
+
+```powershell
+$env:GAS_STATION_AUTOMATION_PLATFORM = "windows"
+```
+
+Si AnyDesk, RustDesk o Windows App no arrancan por nombre, define la ruta
+exacta de cada ejecutable con estas variables de entorno locales:
+
+- `GAS_STATION_ANYDESK_COMMAND`
+- `GAS_STATION_RUSTDESK_COMMAND`
+- `GAS_STATION_REMOTE_DESKTOP_COMMAND`
+- `GAS_STATION_WINDOWS_APP_COMMAND`
+
+En Windows, los accesos al cuadro Ejecutar usan `Win+R` y el escritorio usa
+`Win+D`. En macOS se mantiene el comportamiento actual.
+
 ## Modo seguro de clic
 
 Los objetivos usados por los flujos actuales hacen clic mediante coordenadas

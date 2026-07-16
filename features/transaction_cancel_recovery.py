@@ -143,7 +143,10 @@ def return_to_start_screen():
 
     save_screenshot("09_employee_menu_after_cancel")
 
-    click_relative_to_asset("employee_active_anchor.png", *CONTINUE_SESSION_OFFSET)
+    try:
+        click_asset("continue_session_button.png", timeout=5)
+    except ClickError:
+        click_relative_to_asset("employee_active_anchor.png", *CONTINUE_SESSION_OFFSET)
 
     assert_image_visible("premium.png", confidence=0.80, timeout=15)
 

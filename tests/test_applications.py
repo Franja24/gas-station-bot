@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 from features import applications
 
@@ -136,6 +137,67 @@ class OpenAnyDeskTests(unittest.TestCase):
             "370897792@tpv02-6588 - Remote Desktop - RustDesk"
         )
         select_tab_mock.assert_called_once_with()
+
+    @patch("features.applications.open_anydesk")
+    @patch("features.applications.use_remote_desktop")
+    def test_open_rustdesk_sets_selection_and_opens(
+        self,
+        use_remote_desktop_mock,
+        open_anydesk_mock,
+    ):
+        applications.open_rustdesk()
+
+        use_remote_desktop_mock.assert_called_once_with("rustdesk")
+        open_anydesk_mock.assert_called_once_with()
+
+    @patch("features.applications.use_windows_path", return_value=True)
+    @patch("features.applications.save_screenshot")
+    @patch("features.applications.time.sleep")
+    @patch("features.applications.pygetwindow", create=True)
+    def test_windows_rustdesk_prefers_existing_remote_window(
+        self,
+        pygetwindow_mock,
+        _sleep_mock,
+        save_screenshot_mock,
+        _use_windows_path_mock,
+    ):
+        remote_window = SimpleNamespace(
+            title="370945606@tpv02-6588",
+            isMinimized=False,
+            restore=lambda: None,
+            activate=unittest.mock.Mock(),
+        )
+        pygetwindow_mock.getAllWindows.return_value = [
+            SimpleNamespace(title="RustDesk"),
+            remote_window,
+        ]
+        applications.use_remote_desktop("rustdesk")
+
+        applications.open_anydesk()
+
+        remote_window.activate.assert_called_once_with()
+        save_screenshot_mock.assert_called_once_with("rustdesk_remote_window_opened")
+
+    @patch("features.applications.subprocess.Popen")
+    @patch("features.applications.os.path.isfile", return_value=True)
+    @patch.dict(
+        "features.applications.os.environ",
+        {applications.RUSTDESK_COMMAND_ENV: r"C:\Program Files\RustDesk\RustDesk.exe"},
+        clear=False,
+    )
+    def test_windows_command_runs_exe_paths_with_spaces(
+        self,
+        _isfile_mock,
+        popen_mock,
+    ):
+        applications._run_windows_command(
+            applications.RUSTDESK_COMMAND_ENV,
+            "RustDesk",
+        )
+
+        popen_mock.assert_called_once_with(
+            [r"C:\Program Files\RustDesk\RustDesk.exe"]
+        )
 
 
 if __name__ == "__main__":

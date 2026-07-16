@@ -8,7 +8,12 @@ from features.normal_magna import (
     finalize_visible_purchase_summary,
     prepare_product_selection,
 )
-from features.premium import handle_benefits_or_payment, wait_for_benefits_or_payment
+from features.premium import (
+    handle_benefits_or_payment,
+    handle_payment_result,
+    wait_for_benefits_or_payment,
+    wait_for_payment_result,
+)
 from features.sevenly_login import run as sevenly_login_run
 from features.windows_app import run as windows_run
 from screenshot import save_screenshot
@@ -148,8 +153,9 @@ def complete_card_payment():
     click_asset("card.png", timeout=10)
     save_screenshot("charge_operation_wait_payment")
 
-    assert_image_visible("payment_success.png", confidence=0.80, timeout=30)
-    save_screenshot("charge_operation_payment_success")
+    payment_state = wait_for_payment_result(timeout=30)
+    handle_payment_result(payment_state)
+    save_screenshot(f"charge_operation_payment_{payment_state}")
 
 
 def finalize_dispatch():

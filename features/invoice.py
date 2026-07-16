@@ -54,6 +54,10 @@ def cancel_invoice_if_stuck():
     assert_image_visible("print_ticket_button.png", confidence=0.80, timeout=10)
     save_screenshot("invoice_cancelled_back_to_summary")
 
+    click_asset("finalize_button.png", timeout=10)
+    assert_image_visible("start.png", confidence=0.80, timeout=15)
+    save_screenshot("invoice_cancelled_and_finalized")
+
     return True
 
 

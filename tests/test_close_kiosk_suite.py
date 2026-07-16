@@ -80,15 +80,21 @@ class CloseKioskSuiteTests(unittest.TestCase):
         self.assertEqual(
             [case[0] for case in cases],
             [
+                "01_close_at_payment_screen",
                 "02_close_with_hose_unhooked",
                 "02_5_cleanup_after_hose_unhooked",
+                "03_close_while_fueling_and_confirm",
+                "03_5_cleanup_after_fueling",
             ],
         )
         self.assertEqual(
             [case[1] for case in cases],
             [
+                close_kiosk_suite.close_at_payment_screen_e2e_run,
                 close_kiosk_suite.close_with_hose_unhooked_e2e_run,
                 close_kiosk_suite.cleanup_after_hose_unhooked_run,
+                close_kiosk_suite.close_while_fueling_run,
+                close_kiosk_suite.cleanup_after_fueling_run,
             ],
         )
         self.assertEqual(
@@ -96,7 +102,7 @@ class CloseKioskSuiteTests(unittest.TestCase):
                 case[2].get("reportable", True) if len(case) > 2 else True
                 for case in cases
             ],
-            [True, False],
+            [True, True, False, True, False],
         )
 
 

@@ -1,5 +1,6 @@
 import time
 from features.applications import open_anydesk
+from features.platform_profile import use_windows_path
 from clicker import ClickError, assert_image_visible, click_coordinates, click_image
 from config.settings import SCREENSHOT_TO_MOUSE_SCALE
 from detector import find_image
@@ -9,7 +10,20 @@ from screenshot import save_screenshot
 EMPLOYEE_ID = "2"
 PASSWORD = "123456"
 
-LOGIN_KEYPAD_OFFSETS = {
+WINDOWS_LOGIN_KEYPAD_OFFSETS = {
+    "1": (-204, 36),
+    "2": (-158, 36),
+    "3": (-113, 36),
+    "4": (-68, 36),
+    "5": (-22, 36),
+    "6": (23, 36),
+    "7": (68, 36),
+    "8": (113, 36),
+    "9": (159, 36),
+    "0": (204, 36),
+}
+
+MAC_LOGIN_KEYPAD_OFFSETS = {
     "1": (-301, 53),
     "2": (-233, 53),
     "3": (-165, 53),
@@ -22,7 +36,12 @@ LOGIN_KEYPAD_OFFSETS = {
     "0": (311, 53),
 }
 
-PASSWORD_FIELD_OFFSET = (172, -28)
+LOGIN_KEYPAD_OFFSETS = (
+    WINDOWS_LOGIN_KEYPAD_OFFSETS
+    if use_windows_path()
+    else MAC_LOGIN_KEYPAD_OFFSETS
+)
+PASSWORD_FIELD_OFFSET = (115, -15) if use_windows_path() else (172, -28)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -162,13 +181,13 @@ def run():
 
     click_asset("entry_button.png")
 
-    assert_image_visible("activate_unit.png", confidence=0.80, timeout=15)
+    assert_image_visible("continue_session_button.png", confidence=0.80, timeout=15)
 
     save_screenshot("03_entry button")
 
     # STEP 4 ACTIVATE UNIT
 
-    click_asset("activate_unit.png")
+    click_asset("continue_session_button.png")
 
     assert_image_visible("start.png", confidence=0.80, timeout=15)
 

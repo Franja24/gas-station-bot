@@ -18,6 +18,7 @@ from features.declined_transaction_request import (
     run as declined_transaction_request_run,
 )
 from features.e2e import run as e2e_run
+from features.e2e import run_from_start_button as e2e_from_start_button_run
 from features.e2e_set_5 import run as e2e_set_5_run
 from features.invoice import run as invoice_run
 from features.kiosk_process import run as kiosk_process_run
@@ -67,6 +68,7 @@ CASES = {
     "declined_transaction_e2e": declined_transaction_e2e_run,
     "declined_transaction_request": declined_transaction_request_run,
     "e2e": e2e_run,
+    "e2e_start_button": e2e_from_start_button_run,
     "e2e_set_5": e2e_set_5_run,
     "invoice": invoice_run,
     "kios_011": change_type_charge_run,

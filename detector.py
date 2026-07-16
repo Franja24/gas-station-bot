@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pyautogui
 
+from config.asset_aliases import get_image_candidates
 from config.settings import (
     DETECTION_CONFIRMATIONS,
     DETECTION_LOCATION_TOLERANCE,
@@ -26,12 +27,8 @@ def find_image(
     confidence=MIN_IMAGE_CONFIDENCE,
     timeout=10,
     region=None,
+    confirmations=DETECTION_CONFIRMATIONS,
 ):
-    image_path = ASSETS_FOLDER / image_name
-
-    if not image_path.is_file():
-        raise FileNotFoundError(f"No existe la imagen: {image_path}")
-
     effective_confidence = max(confidence, MIN_IMAGE_CONFIDENCE)
 
     if confidence < MIN_IMAGE_CONFIDENCE:
@@ -40,44 +37,54 @@ def find_image(
             f"se usará el mínimo seguro {effective_confidence:.2f}"
         )
 
-    start_time = time.monotonic()
-    previous_location = None
-    confirmations = 0
+    candidates = get_image_candidates(image_name)
 
-    while time.monotonic() - start_time < timeout:
+    required_confirmations = max(1, int(confirmations))
 
-        try:
-            location = pyautogui.locateCenterOnScreen(
-                str(image_path),
-                confidence=effective_confidence,
-                region=region
-            )
+    for candidate_name in candidates:
+        image_path = ASSETS_FOLDER / candidate_name
 
-            if location is not None:
-                if (
-                    previous_location is not None
-                    and _same_location(previous_location, location)
-                ):
-                    confirmations += 1
+        if not image_path.is_file():
+            continue
+
+        start_time = time.monotonic()
+        previous_location = None
+        confirmations = 0
+
+        while time.monotonic() - start_time < timeout:
+
+            try:
+                location = pyautogui.locateCenterOnScreen(
+                    str(image_path),
+                    confidence=effective_confidence,
+                    region=region
+                )
+
+                if location is not None:
+                    if (
+                        previous_location is not None
+                        and _same_location(previous_location, location)
+                    ):
+                        confirmations += 1
+                    else:
+                        confirmations = 1
+
+                    previous_location = location
+
+                    if confirmations >= required_confirmations:
+                        print(
+                            f"[OK] {candidate_name} confirmado {confirmations} "
+                            f"veces en x={int(location.x)}, y={int(location.y)}"
+                        )
+                        return location
                 else:
-                    confirmations = 1
+                    previous_location = None
+                    confirmations = 0
 
-                previous_location = location
-
-                if confirmations >= DETECTION_CONFIRMATIONS:
-                    print(
-                        f"[OK] {image_name} confirmado {confirmations} veces "
-                        f"en x={int(location.x)}, y={int(location.y)}"
-                    )
-                    return location
-            else:
+            except pyautogui.ImageNotFoundException:
                 previous_location = None
                 confirmations = 0
 
-        except pyautogui.ImageNotFoundException:
-            previous_location = None
-            confirmations = 0
-
-        time.sleep(DETECTION_POLL_INTERVAL)
+            time.sleep(DETECTION_POLL_INTERVAL)
 
     return None

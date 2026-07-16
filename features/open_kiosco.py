@@ -7,6 +7,7 @@ from clicker import assert_image_visible, double_click_coordinates
 from config.coordinates import COORDINATES
 from detector import find_image
 from features.applications import open_anydesk
+from features.platform_profile import use_windows_path
 from screenshot import save_screenshot
 
 
@@ -15,26 +16,34 @@ PETRO_KIOSK_RUN_COMMAND = r'"C:\Program Files\Petro Kiosk App\pos_build_petro.ex
 
 
 def show_remote_desktop():
-    pyautogui.hotkey("command", "d")
+    if use_windows_path():
+        pyautogui.hotkey("winleft", "d")
+    else:
+        pyautogui.hotkey("command", "d")
 
     time.sleep(2)
 
 
 def launch_kiosk_from_run_dialog():
-    subprocess.run(
-        ["pbcopy"],
-        input=PETRO_KIOSK_RUN_COMMAND,
-        text=True,
-        check=True,
-    )
+    if use_windows_path():
+        pyautogui.hotkey("winleft", "r")
+        time.sleep(2)
+        pyautogui.write(PETRO_KIOSK_RUN_COMMAND, interval=0.01)
+    else:
+        subprocess.run(
+            ["pbcopy"],
+            input=PETRO_KIOSK_RUN_COMMAND,
+            text=True,
+            check=True,
+        )
 
-    time.sleep(1)
+        time.sleep(1)
 
-    pyautogui.hotkey("command", "r")
+        pyautogui.hotkey("command", "r")
 
-    time.sleep(2)
+        time.sleep(2)
 
-    pyautogui.hotkey("ctrl", "v")
+        pyautogui.hotkey("ctrl", "v")
 
     time.sleep(1)
 
@@ -58,6 +67,21 @@ def is_kiosk_ready(timeout=3):
     return False
 
 
+def wake_kiosk_from_screensaver():
+    width, height = pyautogui.size()
+    wake_point = (width // 2, height // 2)
+
+    print(
+        f"[KIOSK] Pantalla no reconocida; despertando screensaver "
+        f"en x={wake_point[0]}, y={wake_point[1]}"
+    )
+    pyautogui.click(*wake_point)
+    time.sleep(4)
+    save_screenshot("step_0_kiosk_screensaver_wake_attempt")
+
+    return is_kiosk_ready(timeout=5)
+
+
 def run():
     print("Abriendo Any Desk")
 
@@ -65,6 +89,10 @@ def run():
 
     if is_kiosk_ready(timeout=2):
         save_screenshot("step_0_kiosk_already_ready")
+        return
+
+    if wake_kiosk_from_screensaver():
+        save_screenshot("step_0_kiosk_awake_and_ready")
         return
 
     # STEP 1 - OPEN PETRO KIOSK APP FROM WINDOWS RUN

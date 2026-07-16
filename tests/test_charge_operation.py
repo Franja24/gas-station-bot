@@ -7,6 +7,43 @@ from features import charge_operation
 
 
 class ChargeOperationTests(unittest.TestCase):
+    @patch("features.charge_operation.save_screenshot")
+    @patch("features.charge_operation.handle_payment_result")
+    @patch(
+        "features.charge_operation.wait_for_payment_result",
+        return_value="ready_for_dispatch",
+    )
+    @patch("features.charge_operation.handle_benefits_or_payment")
+    @patch(
+        "features.charge_operation.wait_for_benefits_or_payment",
+        return_value="no_benefits",
+    )
+    @patch("features.charge_operation.click_asset")
+    def test_card_payment_accepts_terminal_ready_before_dispatch(
+        self,
+        click_asset_mock,
+        _wait_benefits_mock,
+        handle_benefits_mock,
+        wait_payment_mock,
+        handle_payment_mock,
+        save_screenshot_mock,
+    ):
+        charge_operation.complete_card_payment()
+
+        self.assertEqual(
+            click_asset_mock.call_args_list,
+            [
+                call("continue_button.png", timeout=10),
+                call("card.png", timeout=10),
+            ],
+        )
+        handle_benefits_mock.assert_called_once_with("no_benefits")
+        wait_payment_mock.assert_called_once_with(timeout=30)
+        handle_payment_mock.assert_called_once_with("ready_for_dispatch")
+        save_screenshot_mock.assert_any_call(
+            "charge_operation_payment_ready_for_dispatch"
+        )
+
     @patch("features.charge_operation.run_stages")
     def test_runs_three_stage_groups_without_sevenly(self, run_stages_mock):
         expected_result = {"stages": []}

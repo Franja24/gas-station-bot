@@ -49,17 +49,26 @@ class InvoiceFlowTests(unittest.TestCase):
         invoice.run()
 
         open_anydesk_mock.assert_called_once_with()
-        click_asset_mock.assert_called_once_with(
-            "cancel_invoice_button.png",
-            timeout=10,
+        self.assertEqual(
+            click_asset_mock.call_args_list,
+            [
+                call("cancel_invoice_button.png", timeout=10),
+                call("finalize_button.png", timeout=10),
+            ],
         )
-        assert_image_visible_mock.assert_called_once_with(
-            "print_ticket_button.png",
-            confidence=0.80,
-            timeout=10,
+        self.assertEqual(
+            assert_image_visible_mock.call_args_list,
+            [
+                call("print_ticket_button.png", confidence=0.80, timeout=10),
+                call("start.png", confidence=0.80, timeout=15),
+            ],
         )
-        save_screenshot_mock.assert_called_once_with(
-            "invoice_cancelled_back_to_summary"
+        self.assertEqual(
+            save_screenshot_mock.call_args_list,
+            [
+                call("invoice_cancelled_back_to_summary"),
+                call("invoice_cancelled_and_finalized"),
+            ],
         )
 
     @patch("features.invoice.open_anydesk")
