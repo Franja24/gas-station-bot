@@ -6,6 +6,7 @@ from unittest.mock import call, patch
 from PIL import Image
 
 from features import sevenly_login
+from config.settings import SCREENSHOT_TO_MOUSE_SCALE
 
 
 class SevenlyLoginFlowTests(unittest.TestCase):
@@ -182,7 +183,10 @@ class SevenlyLoginFlowTests(unittest.TestCase):
             timeout=2,
             region=sevenly_login.SEVENLY_ACCOUNT_REGION,
         )
-        click_coordinates_mock.assert_called_once_with(557, 122)
+        click_coordinates_mock.assert_called_once_with(
+            int(1434 * SCREENSHOT_TO_MOUSE_SCALE) - 160,
+            int(244 * SCREENSHOT_TO_MOUSE_SCALE),
+        )
         save_screenshot_mock.assert_called_once_with("step_1_sevenly_clicked")
 
 

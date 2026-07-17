@@ -6,7 +6,7 @@ DEFAULT_COORDINATES = {
     "petro_kiosk_app_icon": (429, 19),
     "login_button.png": (680, 535),
     "entry_button.png": (650, 500),
-    "activate_unit.png": (680, 530),
+    "continue_session_button.png": (680, 530),
     "sevenly.png": (718, 123),
     "premium.png": (640, 256),
     "magna.png": (640, 398),

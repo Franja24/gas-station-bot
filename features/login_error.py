@@ -1,11 +1,11 @@
 import time
 from features.applications import open_anydesk
-from clicker import assert_image_visible, click_coordinates, click_image
+from clicker import assert_image_visible, click_image
 from screenshot import save_screenshot
 
 
-EMPLOYEE_ID = "3"
-PASSWORD = "123456"
+EMPLOYEE_ID = "2"
+PASSWORD = "1234567"
 
 LOGIN_DIGITS = {
     "0": "login_zero_button.png",
@@ -23,7 +23,12 @@ LOGIN_DIGITS = {
 
 def enter_login_digits(value):
     for digit in value:
-        click_image(LOGIN_DIGITS[digit], timeout=10)
+        click_image(
+            LOGIN_DIGITS[digit],
+            timeout=10,
+            use_coordinates=False,
+            use_region=False,
+        )
 
         time.sleep(1)
 
@@ -49,7 +54,11 @@ def run():
 
     #  campo de texto password
 
-    click_coordinates(660, 310)
+    click_image(
+        "pass_field.png",
+        use_coordinates=False,
+        use_region=False,
+    )
 
     time.sleep(1)
 
@@ -60,7 +69,11 @@ def run():
 
     # STEP  3  LOGIN_BUTTON
 
-    click_image("entry_button.png")
+    click_image(
+        "entry_button.png",
+        use_coordinates=False,
+        use_region=False,
+    )
 
     time.sleep(2)
 

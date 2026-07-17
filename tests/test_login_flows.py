@@ -92,7 +92,7 @@ class LoginFlowTests(unittest.TestCase):
                     region=None,
                 ),
                 call(
-                    "activate_unit.png",
+                    "continue_session_button.png",
                     timeout=10,
                     use_coordinates=False,
                     use_region=False,
@@ -110,7 +110,7 @@ class LoginFlowTests(unittest.TestCase):
         self.assertEqual(
             assert_image_visible_mock.call_args_list,
             [
-                call("activate_unit.png", confidence=0.80, timeout=15),
+                call("continue_session_button.png", confidence=0.80, timeout=15),
                 call("start.png", confidence=0.80, timeout=15),
                 call("premium.png", confidence=0.80, timeout=15),
             ],

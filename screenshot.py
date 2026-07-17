@@ -1,4 +1,5 @@
 from datetime import datetime
+import hashlib
 import json
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -57,7 +58,17 @@ def save_screenshot(name):
     if _CURRENT_STAGE:
         prefix_parts.append(_CURRENT_STAGE)
     prefix_parts.append(name)
-    filename = SCREENSHOTS_FOLDER / f"{'__'.join(prefix_parts)}.png"
+    screenshot_name = "__".join(prefix_parts)
+    filename = SCREENSHOTS_FOLDER / f"{screenshot_name}.png"
+
+    # Pillow no siempre puede escribir rutas que rebasan el límite clásico de
+    # Windows. Conservamos la parte legible y añadimos un hash para evitar
+    # colisiones entre casos/etapas con nombres largos.
+    if len(str(filename)) >= 240:
+        digest = hashlib.sha1(screenshot_name.encode("utf-8")).hexdigest()[:10]
+        available = max(40, 230 - len(str(SCREENSHOTS_FOLDER)))
+        readable = screenshot_name[: max(20, available - len(digest) - 2)]
+        filename = SCREENSHOTS_FOLDER / f"{readable}__{digest}.png"
 
     screenshot = pyautogui.screenshot()
 

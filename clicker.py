@@ -15,6 +15,7 @@ from config.settings import (
     SCREENSHOT_TO_MOUSE_SCALE,
 )
 from detector import find_image
+from features.platform_profile import use_windows_path
 
 
 mouse = Controller()
@@ -51,13 +52,8 @@ def click_image(
     use_region=True,
     region=None,
 ):
-    if use_coordinates and image_name in CALIBRATED_COORDINATES:
-        x, y = CALIBRATED_COORDINATES[image_name]
-        print(f"[COORD MODE] {image_name} -> x={x}, y={y}")
-        return click_coordinates(x, y)
-
     search_region = region
-    if search_region is None and use_region:
+    if search_region is None and use_region and not use_windows_path():
         search_region = REGIONS.get(image_name)
 
     print(
@@ -73,6 +69,14 @@ def click_image(
     )
 
     if location is None:
+        if use_coordinates and image_name in CALIBRATED_COORDINATES:
+            x, y = CALIBRATED_COORDINATES[image_name]
+            print(
+                f"[COORD FALLBACK] No se detectó {image_name}; "
+                f"usando x={x}, y={y}"
+            )
+            return click_coordinates(x, y)
+
         raise ClickError(
             f"No se encontró una coincidencia segura para {image_name}. "
             "Se canceló el flujo antes de hacer clic."

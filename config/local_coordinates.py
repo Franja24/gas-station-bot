@@ -59,3 +59,34 @@ def load_local_coordinates(section_name, default_coordinates, path=None):
         coordinates[key] = _normalize_coordinate(section_name, key, value)
 
     return coordinates
+
+
+def load_local_settings(default_settings, path=None):
+    local_config = _load_local_config(path or LOCAL_COORDINATES_PATH)
+    overrides = local_config.get("settings", {})
+
+    if not isinstance(overrides, dict):
+        raise CoordinateConfigError(
+            "La seccion settings debe contener un objeto JSON."
+        )
+
+    settings = dict(default_settings)
+
+    if "reference_screen_size" in overrides:
+        settings["reference_screen_size"] = _normalize_coordinate(
+            "settings",
+            "reference_screen_size",
+            overrides["reference_screen_size"],
+        )
+
+    if "screenshot_to_mouse_scale" in overrides:
+        scale = overrides["screenshot_to_mouse_scale"]
+
+        if not isinstance(scale, (int, float)):
+            raise CoordinateConfigError(
+                "settings.screenshot_to_mouse_scale debe ser un numero."
+            )
+
+        settings["screenshot_to_mouse_scale"] = float(scale)
+
+    return settings

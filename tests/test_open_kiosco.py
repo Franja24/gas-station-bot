@@ -19,6 +19,8 @@ screenshot_stub.save_screenshot = lambda *args, **kwargs: None
 pyautogui_stub = types.ModuleType("pyautogui")
 pyautogui_stub.hotkey = lambda *args, **kwargs: None
 pyautogui_stub.press = lambda *args, **kwargs: None
+pyautogui_stub.click = lambda *args, **kwargs: None
+pyautogui_stub.size = lambda: (1920, 1200)
 
 sys.modules.setdefault("clicker", clicker_stub)
 sys.modules.setdefault("features.applications", applications_stub)
@@ -29,6 +31,31 @@ from features import open_kiosco
 
 
 class OpenKioscoFlowTests(unittest.TestCase):
+    @patch("features.open_kiosco.save_screenshot")
+    @patch("features.open_kiosco.is_kiosk_ready", side_effect=[False, True])
+    @patch("features.open_kiosco.pyautogui.click")
+    @patch("features.open_kiosco.pyautogui.size", return_value=(1920, 1200))
+    @patch("features.open_kiosco.time.sleep")
+    @patch("features.open_kiosco.open_anydesk")
+    def test_wakes_existing_kiosk_before_trying_to_launch_it(
+        self,
+        open_anydesk_mock,
+        _sleep_mock,
+        _size_mock,
+        click_mock,
+        is_kiosk_ready_mock,
+        save_screenshot_mock,
+    ):
+        open_kiosco.run()
+
+        open_anydesk_mock.assert_called_once_with()
+        click_mock.assert_called_once_with(960, 600)
+        self.assertEqual(is_kiosk_ready_mock.call_count, 2)
+        save_screenshot_mock.assert_any_call(
+            "step_0_kiosk_screensaver_wake_attempt"
+        )
+        save_screenshot_mock.assert_any_call("step_0_kiosk_awake_and_ready")
+
     @patch("features.open_kiosco.assert_image_visible")
     @patch("features.open_kiosco.save_screenshot")
     @patch("features.open_kiosco.find_image")

@@ -71,7 +71,7 @@ def wait_for_payment_result(timeout=PAYMENT_RESULT_TIMEOUT_SECONDS):
             "bank_terminal_instructions_title.png",
             timeout=1,
         ) is not None:
-            continue
+            return "ready_for_dispatch"
 
     raise ClickError(
         "No apareció payment_success.png ni payment_declined_title.png "
@@ -88,6 +88,11 @@ def handle_payment_result(current_state=None):
         save_screenshot("instructions pumb server")
         return
 
+    if state == "ready_for_dispatch":
+        save_screenshot("step_5.1_terminal_ready")
+        save_screenshot("instructions_pump_server")
+        return
+
     if state == "declined":
         payment_declined_response_run(open_app=False)
         raise ClickError(
@@ -96,7 +101,7 @@ def handle_payment_result(current_state=None):
 
     raise ClickError(
         "Resultado de pago desconocido: "
-        f"{state}. Se esperaba success o declined."
+        f"{state}. Se esperaba success, ready_for_dispatch o declined."
     )
 
 

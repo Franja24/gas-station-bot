@@ -2,6 +2,10 @@ Evidencias/
 evidencias/
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.coverage
+*.log
 .DS_Store
 debug_screen.png
 test.png
