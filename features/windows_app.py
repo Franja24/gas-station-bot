@@ -1,7 +1,7 @@
 import time
-import subprocess
 import pyautogui
 from features.applications import open_windows_app
+from features.windows_app_hang_up_validate import focus_pump_simulator
 
 from screenshot import save_screenshot
 
@@ -13,6 +13,8 @@ def run():
     open_windows_app()
 
     time.sleep(2)
+
+    focus_pump_simulator()
 
     # STEP 2 - PUMP SIMULATOR
 

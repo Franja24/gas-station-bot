@@ -2,6 +2,8 @@ import os
 import subprocess
 import time
 
+import pyautogui
+
 from clicker import click_coordinates, double_click_coordinates
 from features.platform_profile import use_windows_path
 from screenshot import save_screenshot
@@ -16,6 +18,7 @@ RUSTDESK_COMMAND_ENV = "GAS_STATION_RUSTDESK_COMMAND"
 WINDOWS_APP_COMMAND_ENV = "GAS_STATION_WINDOWS_APP_COMMAND"
 WINDOWS_REMOTE_DESKTOP_TITLE = "Conexión a Escritorio remoto"
 RUSTDESK_WINDOWS_WINDOW_KEYWORD_ENV = "GAS_STATION_RUSTDESK_WINDOW_KEYWORD"
+RUSTDESK_WINDOWS_EXECUTABLE = r"C:\Program Files\RustDesk\rustdesk.exe"
 
 REMOTE_DESKTOP_APPS = {
     "anydesk": {
@@ -53,7 +56,12 @@ def use_remote_desktop(app_name):
 
 
 def _selected_remote_desktop():
-    return os.environ.get(REMOTE_DESKTOP_APP_ENV, "anydesk").strip().lower()
+    configured_app = os.environ.get(REMOTE_DESKTOP_APP_ENV, "").strip().lower()
+
+    if configured_app:
+        return configured_app
+
+    return "rustdesk" if use_windows_path() else "anydesk"
 
 
 def _run_windows_command(command, fallback_app_name):
@@ -64,6 +72,10 @@ def _run_windows_command(command, fallback_app_name):
             subprocess.Popen([resolved_command])
         else:
             subprocess.run(resolved_command, shell=True, check=True)
+        return
+
+    if os.path.isfile(fallback_app_name):
+        subprocess.Popen([fallback_app_name])
         return
 
     subprocess.run(["cmd", "/c", "start", "", fallback_app_name], check=True)
@@ -77,6 +89,35 @@ def _windows_remote_window_keyword(app_key):
         RUSTDESK_WINDOWS_WINDOW_KEYWORD_ENV,
         RUSTDESK_WINDOWS_REMOTE_WINDOW_KEYWORD,
     ).strip()
+
+
+def _foreground_windows_window_title():
+    import ctypes
+
+    window_handle = ctypes.windll.user32.GetForegroundWindow()
+    title_length = ctypes.windll.user32.GetWindowTextLengthW(window_handle)
+    title_buffer = ctypes.create_unicode_buffer(title_length + 1)
+    ctypes.windll.user32.GetWindowTextW(
+        window_handle,
+        title_buffer,
+        title_length + 1,
+    )
+
+    return title_buffer.value
+
+
+def _release_windows_remote_desktop_focus(app_key):
+    if app_key != "rustdesk":
+        return
+
+    foreground_title = _foreground_windows_window_title()
+
+    if WINDOWS_REMOTE_DESKTOP_TITLE.lower() not in foreground_title.lower():
+        return
+
+    print("[INFO] Liberando el foco local de Escritorio remoto...")
+    pyautogui.hotkey("alt", "tab")
+    time.sleep(1)
 
 
 def _activate_matching_windows_window(app_key):
@@ -104,6 +145,8 @@ def _activate_matching_windows_window(app_key):
     # remota visible por titulo, por ejemplo "370945606@tpv02-6588".
     remote_window = matching_windows[0]
 
+    _release_windows_remote_desktop_focus(app_key)
+
     if remote_window.isMinimized:
         remote_window.restore()
 
@@ -130,16 +173,19 @@ def _launch_remote_desktop_windows(app_key):
 
     if app_key == "anydesk":
         command_env = ANYDESK_COMMAND_ENV
+        fallback_command = display_name
     elif app_key == "rustdesk":
         command_env = RUSTDESK_COMMAND_ENV
+        fallback_command = RUSTDESK_WINDOWS_EXECUTABLE
     else:
         command_env = REMOTE_DESKTOP_COMMAND_ENV
+        fallback_command = display_name
 
     if _activate_matching_windows_window(app_key):
         return
 
     print(f"[INFO] Abriendo {display_name} en Windows...")
-    _run_windows_command(command_env, display_name)
+    _run_windows_command(command_env, fallback_command)
     time.sleep(3)
     if _activate_matching_windows_window(app_key):
         return

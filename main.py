@@ -48,6 +48,9 @@ from features.tdc_from_active_session import run as tdc_from_active_session_run
 from features.tdc_from_start_screen import run as tdc_from_start_screen_run
 from features.tdd_e2e import run as tdd_e2e_run
 from features.transaction_cancel_recovery import run as transaction_cancel_recovery_run
+from features.unhook_hose_before_payment_approval_e2e import (
+    run as unhook_hose_before_payment_approval_run,
+)
 from features.windows_app import run as windows_run
 from features.windows_app_close_app import run as windows_app_close_run
 from features.windows_app_close_hung_up import run as windows_app_close_hung_up_run
@@ -100,6 +103,9 @@ CASES = {
     "tdc_from_start_screen": tdc_from_start_screen_run,
     "tdd_e2e": tdd_e2e_run,
     "transaction_cancel_recovery": transaction_cancel_recovery_run,
+    "unhook_hose_before_payment_approval": (
+        unhook_hose_before_payment_approval_run
+    ),
     "windows": windows_run,
     "windows_app_close": windows_app_close_run,
     "windows_app_close_hung_up": windows_app_close_hung_up_run,

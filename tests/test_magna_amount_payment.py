@@ -131,9 +131,9 @@ class MagnaAmountPaymentFlowTests(unittest.TestCase):
         self.assertEqual(
             click_coordinates_mock.call_args_list,
             [
-                call(526, 302),
-                call(638, 433),
-                call(638, 433),
+                call(806, 453),
+                call(957, 627),
+                call(957, 627),
             ],
         )
         self.assertEqual(

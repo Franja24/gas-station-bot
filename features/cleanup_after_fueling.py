@@ -8,7 +8,7 @@ from screenshot import save_screenshot
 
 def run():
     try:
-        confirm_transaction_run()
+        confirm_transaction_run(expected_amount="200")
     except Exception as exc:
         print(
             "[CLEANUP] No se pudo confirmar transaccion pendiente; "

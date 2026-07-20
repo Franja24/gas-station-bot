@@ -1,4 +1,5 @@
 from clicker import assert_image_visible, click_image
+from detector import find_image
 from features.applications import open_anydesk
 from features.manual_cancel_last_transation import click_asset, open_settings_menu
 from screenshot import save_screenshot
@@ -76,6 +77,21 @@ def open_latest_declined_response():
     save_screenshot("declined_step_6_response_metadata_visible")
 
 
+def return_to_product_selection_after_log_review():
+    click_asset("metadata_close_button.png", timeout=10)
+
+    for step in range(1, 4):
+        click_asset("regresar_button.png", timeout=10)
+        save_screenshot(f"declined_step_7_back_{step}")
+
+    if find_image("continue_session_button.png", timeout=3) is not None:
+        click_asset("continue_session_button.png", timeout=10)
+
+    assert_image_visible("premium.png", confidence=0.80, timeout=15)
+    assert_image_visible("magna.png", confidence=0.80, timeout=15)
+    save_screenshot("declined_step_8_product_selection_restored")
+
+
 def run(open_app=True):
     print("Validando response de pago declinado")
 
@@ -85,3 +101,4 @@ def run(open_app=True):
     return_to_product_selection_from_decline()
     open_transaction_log_from_settings()
     open_latest_declined_response()
+    return_to_product_selection_after_log_review()

@@ -3,10 +3,11 @@ import time
 from clicker import assert_image_visible
 from features.applications import open_anydesk
 from features.manual_cancel_last_transation import click_asset, open_settings_menu
+from features.transaction_log_selection import click_transaction
 from screenshot import save_screenshot
 
 
-def run():
+def run(expected_amount=None):
     print("Confirmando manualmente la ultima transaccion")
 
     open_anydesk()
@@ -31,7 +32,7 @@ def run():
 
     save_screenshot("step_2_transaction_log_visible")
 
-    click_asset("transaction_log_first_row_marker.png", timeout=10)
+    click_transaction(expected_amount)
 
     assert_image_visible(
         "transaction_summary_title.png",

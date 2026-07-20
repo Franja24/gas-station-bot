@@ -14,24 +14,18 @@ kiosk_process_stub.run = lambda: None
 login_if_needed_stub = types.ModuleType("features.login_if_needed")
 login_if_needed_stub.run = lambda: None
 
-magna_stub = types.ModuleType("features.magna")
-magna_stub.run = lambda: None
+magna_amount_100_stub = types.ModuleType("features.magna_amount_100")
+magna_amount_100_stub.run = lambda: None
 
 open_kiosco_ready_stub = types.ModuleType("features.open_kiosco_ready")
 open_kiosco_ready_stub.run = lambda: None
-
-return_to_product_selection_stub = types.ModuleType(
-    "features.return_to_product_selection"
-)
-return_to_product_selection_stub.run = lambda: None
 
 _STUBBED_MODULES = {
     "case_runner": case_runner_stub,
     "features.kiosk_process": kiosk_process_stub,
     "features.login_if_needed": login_if_needed_stub,
-    "features.magna": magna_stub,
+    "features.magna_amount_100": magna_amount_100_stub,
     "features.open_kiosco_ready": open_kiosco_ready_stub,
-    "features.return_to_product_selection": return_to_product_selection_stub,
 }
 
 _original_modules = {
@@ -53,7 +47,7 @@ for module_name, original_module in _original_modules.items():
 
 class CloseAtPaymentScreenE2ETests(unittest.TestCase):
     @patch("features.close_at_payment_screen_e2e.run_stages")
-    def test_runs_payment_screen_close_and_returns_to_product_selection(
+    def test_runs_payment_screen_close_and_reopens_at_login_boundary(
         self,
         run_stages_mock,
     ):
@@ -69,10 +63,9 @@ class CloseAtPaymentScreenE2ETests(unittest.TestCase):
             [
                 "01_open_kiosco",
                 "02_login_if_needed",
-                "03_magna_to_instructions",
+                "03_magna_amount_100_to_instructions",
                 "04_close_kiosk_at_payment_screen",
                 "05_open_kiosco",
-                "06_return_to_product_selection",
             ],
         )
 

@@ -6,7 +6,7 @@ from unittest.mock import call, patch
 
 
 applications_stub = types.ModuleType("features.applications")
-applications_stub.open_anydesk = lambda: None
+applications_stub.open_rustdesk = lambda: None
 applications_stub.open_windows_app = lambda: None
 
 kiosk_process_stub = types.ModuleType("features.kiosk_process")
@@ -14,6 +14,14 @@ kiosk_process_stub.force_close_kiosk_process = lambda: None
 
 premium_close_stub = types.ModuleType("features.premium_close_app")
 premium_close_stub.close_with_alt_f4 = lambda: None
+
+platform_profile_stub = types.ModuleType("features.platform_profile")
+platform_profile_stub.use_windows_path = lambda: True
+
+hang_up_validate_stub = types.ModuleType(
+    "features.windows_app_hang_up_validate"
+)
+hang_up_validate_stub.focus_pump_simulator = lambda: None
 
 screenshot_stub = types.ModuleType("screenshot")
 screenshot_stub.save_screenshot = lambda *args, **kwargs: None
@@ -25,6 +33,8 @@ _STUBBED_MODULES = {
     "features.applications": applications_stub,
     "features.kiosk_process": kiosk_process_stub,
     "features.premium_close_app": premium_close_stub,
+    "features.platform_profile": platform_profile_stub,
+    "features.windows_app_hang_up_validate": hang_up_validate_stub,
     "screenshot": screenshot_stub,
     "pyautogui": pyautogui_stub,
 }
@@ -52,12 +62,12 @@ class WindowsAppUnhookCloseTests(unittest.TestCase):
     @patch("features.windows_app_unhook_close.save_screenshot")
     @patch("features.windows_app_unhook_close.pyautogui.press")
     @patch("features.windows_app_unhook_close.time.sleep")
-    @patch("features.windows_app_unhook_close.open_anydesk")
+    @patch("features.windows_app_unhook_close.open_rustdesk")
     @patch("features.windows_app_unhook_close.open_windows_app")
     def test_unhooks_hose_and_closes_kiosk(
         self,
         open_windows_app_mock,
-        open_anydesk_mock,
+        open_rustdesk_mock,
         _sleep_mock,
         press_mock,
         save_screenshot_mock,
@@ -68,15 +78,14 @@ class WindowsAppUnhookCloseTests(unittest.TestCase):
 
         open_windows_app_mock.assert_called_once_with()
         press_mock.assert_called_once_with("d")
-        open_anydesk_mock.assert_called_once_with()
-        close_with_alt_f4_mock.assert_called_once_with()
+        open_rustdesk_mock.assert_called_once_with()
+        close_with_alt_f4_mock.assert_not_called()
         force_close_kiosk_process_mock.assert_called_once_with()
         self.assertEqual(
             save_screenshot_mock.call_args_list,
             [
                 call("pump_simulator_descolgar_executed"),
-                call("return_anydesk"),
-                call("step_2_alt_f4_close_attempt"),
+                call("return_rustdesk"),
                 call("step_3_force_close_attempt"),
             ],
         )

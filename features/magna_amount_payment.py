@@ -26,16 +26,18 @@ DIGITS = {
 }
 
 AMOUNT_KEYPAD_COORDINATES = {
-    "0": (638, 433),
-    "1": (526, 302),
-    "2": (638, 302),
-    "3": (752, 302),
-    "4": (526, 346),
-    "5": (638, 346),
-    "6": (752, 346),
-    "7": (526, 390),
-    "8": (638, 390),
-    "9": (752, 390),
+    # RustDesk en Windows, pantalla local 1920x1200. El kiosco ocupa la
+    # columna central y el teclado aparece en x=733..1188, y=427..655.
+    "0": (957, 627),
+    "1": (806, 453),
+    "2": (957, 453),
+    "3": (1111, 453),
+    "4": (806, 511),
+    "5": (957, 511),
+    "6": (1111, 511),
+    "7": (806, 569),
+    "8": (957, 569),
+    "9": (1111, 569),
 }
 
 
@@ -85,10 +87,10 @@ def is_product_selection_visible(timeout=1):
     )
 
 
-def click_magna_until_amount_options(max_attempts=3):
+def click_product_until_amount_options(product="magna", max_attempts=3):
     for attempt in range(1, max_attempts + 1):
-        print(f"[MAGNA] Intento {attempt} para seleccionar Magna")
-        click_asset_or_calibrated("magna.png", timeout=10)
+        print(f"[PRODUCT] Intento {attempt} para seleccionar {product}")
+        click_asset_or_calibrated(f"{product}.png", timeout=10)
 
         time.sleep(2)
 
@@ -118,13 +120,48 @@ def open_manual_amount_keypad():
     time.sleep(1)
 
 
-def run_amount_payment(amount, flow_name):
-    print(f"Cambiando a AnyDesk para pago con monto {amount}")
+def wait_for_approved_payment(timeout=120):
+    start_time = time.monotonic()
+
+    while time.monotonic() - start_time < timeout:
+        if (
+            is_visible("payment_success.png", confidence=0.80, timeout=1)
+            or is_visible(
+                "dispatch_instructions_title.png",
+                confidence=0.80,
+                timeout=1,
+            )
+        ):
+            save_screenshot("payment_approved_before_opening_pump_simulator")
+            return "approved"
+
+        if is_visible("payment_declined_title.png", confidence=0.80, timeout=1):
+            assert_image_visible(
+                "payment_declined_message.png",
+                confidence=0.80,
+                timeout=10,
+            )
+            save_screenshot("payment_declined_before_opening_pump_simulator")
+            payment_declined_response_run(open_app=False)
+            return "declined"
+
+    raise ClickError(
+        "No apareció payment_success.png antes de abrir Escritorio remoto."
+    )
+
+
+def run_amount_payment(
+    amount,
+    flow_name,
+    product="magna",
+    require_payment_approval=False,
+):
+    print(f"Cambiando a RustDesk para pago {product} con monto {amount}")
 
     open_anydesk()
 
-    # STEP 1 - MAGNA
-    click_magna_until_amount_options()
+    # STEP 1 - PRODUCTO
+    click_product_until_amount_options(product)
 
     save_screenshot(f"{flow_name}_step_1_magna_clicked")
 
@@ -164,4 +201,11 @@ def run_amount_payment(amount, flow_name):
 
     save_screenshot(f"{flow_name}_step_6_wait_payment")
 
-    handle_payment_result(wait_for_payment_result())
+    payment_state = wait_for_payment_result()
+    handle_payment_result(payment_state)
+
+    if require_payment_approval and payment_state == "ready_for_dispatch":
+        print("[PAYMENT] Terminal listo; esperando pago aprobado")
+        return wait_for_approved_payment()
+
+    return payment_state

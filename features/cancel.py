@@ -3,6 +3,7 @@ import time
 import pyautogui
 
 from clicker import assert_image_visible, click_image
+from features.applications import open_anydesk
 from screenshot import save_screenshot
 
 
@@ -38,6 +39,8 @@ def click_cancel_service():
 
 def run():
     print("Cancelando servicio")
+
+    open_anydesk()
 
     click_cancel_service()
 

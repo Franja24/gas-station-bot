@@ -81,6 +81,15 @@ def continue_if_already_authenticated():
         save_screenshot("00_login_already_authenticated_iniciar")
         return True
 
+    if find_asset("activate_unit_button.png", timeout=2) is not None:
+        print("[LOGIN] Empleado autenticado; activando unidad")
+        click_asset("activate_unit_button.png")
+        assert_image_visible("start.png", confidence=0.80, timeout=15)
+        click_asset("start.png")
+        assert_image_visible("premium.png", confidence=0.80, timeout=15)
+        save_screenshot("00_login_already_authenticated_activate_unit")
+        return True
+
     return False
 
 
@@ -181,13 +190,32 @@ def run():
 
     click_asset("entry_button.png")
 
-    assert_image_visible("continue_session_button.png", confidence=0.80, timeout=15)
+    employee_action = None
+
+    for image_name in (
+        "activate_unit_button.png",
+        "continue_session_button.png",
+    ):
+        if find_asset(image_name, timeout=8) is not None:
+            employee_action = image_name
+            break
+
+    if employee_action is None:
+        raise ClickError(
+            "Login exitoso, pero no aparecio Activar Unidad ni "
+            "Continuar Sesion."
+        )
 
     save_screenshot("03_entry button")
 
     # STEP 4 ACTIVATE UNIT
 
-    click_asset("continue_session_button.png")
+    click_asset(employee_action)
+
+    if employee_action == "continue_session_button.png":
+        if find_asset("premium.png", timeout=5) is not None:
+            save_screenshot("04_continue_session_product_selection")
+            return
 
     assert_image_visible("start.png", confidence=0.80, timeout=15)
 

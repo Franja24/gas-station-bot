@@ -1,11 +1,26 @@
 import time
 
 import pyautogui
+from pynput.keyboard import Controller as KeyboardController
+from pynput.keyboard import Key
 
 from clicker import assert_image_visible, click_coordinates, click_image
 from detector import find_image
 from features.applications import open_anydesk
 from screenshot import save_screenshot
+
+
+keyboard = KeyboardController()
+
+
+def press_remote_space():
+    # RustDesk filtra el Space generado por PyAutoGUI en Windows. pynput usa
+    # una ruta de entrada distinta que RustDesk si retransmite al kiosco.
+    keyboard.press(Key.space)
+
+    time.sleep(0.15)
+
+    keyboard.release(Key.space)
 
 
 def click_asset(image_name, timeout=10):
@@ -18,6 +33,10 @@ def click_asset(image_name, timeout=10):
 
 
 def open_settings_menu():
+    if find_image("settings_transaction_log_option.png", timeout=2) is not None:
+        print("[SETTINGS] El menu de Ajustes ya esta visible")
+        return
+
     pyautogui.press("esc")
 
     time.sleep(0.5)
@@ -41,7 +60,7 @@ def open_settings_menu():
 
     time.sleep(0.5)
 
-    pyautogui.press("space")
+    press_remote_space()
 
     time.sleep(2)
 

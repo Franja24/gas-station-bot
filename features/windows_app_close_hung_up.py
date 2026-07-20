@@ -2,8 +2,9 @@ import time
 
 import pyautogui
 
-from features.applications import open_anydesk, open_windows_app
+from features.applications import open_rustdesk, open_windows_app
 from features.premium_close_app import close_with_alt_f4
+from features.windows_app_hang_up_validate import focus_pump_simulator
 from screenshot import save_screenshot
 
 
@@ -16,6 +17,8 @@ def run():
 
     time.sleep(2)
 
+    focus_pump_simulator()
+
     # STEP 2 - PUMP SIMULATOR
 
     pyautogui.press("d")   # Descolgar
@@ -24,13 +27,13 @@ def run():
 
     save_screenshot("pump_simulator_descolgar_executed")
 
-    # STEP 3 - RETURN ANYDESK
+    # STEP 3 - RETURN RUSTDESK
 
-    print("Cambiando a AnyDesk")
+    print("Cambiando a RustDesk")
 
-    open_anydesk()
+    open_rustdesk()
 
-    save_screenshot("return_anydesk")
+    save_screenshot("return_rustdesk")
 
     # STEP 4 - CLOSE APP WHILE HOSE IS HUNG OFF
 

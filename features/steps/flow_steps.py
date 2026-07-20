@@ -85,6 +85,9 @@ FLOW_RUNNERS = {
     "sevenly_login_error": module_runner("sevenly_login_error"),
     "sale_confirmation_recovery": module_runner("sale_confirmation_recovery"),
     "transaction_cancel_recovery": module_runner("transaction_cancel_recovery"),
+    "unhook_hose_before_payment_approval": module_runner(
+        "unhook_hose_before_payment_approval_e2e"
+    ),
     "windows": module_runner("windows_app"),
     "windows app": module_runner("windows_app"),
     "windows_app": module_runner("windows_app"),
