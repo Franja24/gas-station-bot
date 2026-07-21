@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -18,8 +19,13 @@ EXPECTED_REMOTE_SOURCE_DIR = (
     "com.iconn.zimble/pos_build_petro"
 )
 EXPECTED_SOURCE_FOLDER_NAME = "pos_build_petro"
-DEFAULT_SOURCE_DIR = PROJECT_ROOT / EXPECTED_SOURCE_FOLDER_NAME
-DEFAULT_LOG_PATTERN = "api_log*"
+RUSTDESK_DROP_FOLDER_NAME = "api_log_drop"
+ALLOWED_SOURCE_FOLDER_NAMES = {
+    EXPECTED_SOURCE_FOLDER_NAME,
+    RUSTDESK_DROP_FOLDER_NAME,
+}
+DEFAULT_SOURCE_DIR = Path.home() / RUSTDESK_DROP_FOLDER_NAME
+DEFAULT_LOG_PATTERN = "api_log_*.txt"
 
 
 def _expand_path(path):
@@ -83,7 +89,7 @@ def _source_folder_name(path):
 
 
 def is_expected_pos_log_source(source_dir):
-    return _source_folder_name(source_dir) == EXPECTED_SOURCE_FOLDER_NAME
+    return _source_folder_name(source_dir) in ALLOWED_SOURCE_FOLDER_NAMES
 
 
 def print_unverified_source_warning(source_dir):
@@ -92,16 +98,16 @@ def print_unverified_source_warning(source_dir):
         f"{source_dir}"
     )
     print(
-        "[POS LOG] El log correcto esta dentro del equipo remoto de AnyDesk en: "
+        "[POS LOG] El log correcto esta dentro del equipo remoto de RustDesk en: "
         f"{EXPECTED_REMOTE_SOURCE_DIR}"
     )
     print(
-        "[POS LOG] Python no puede leer esa ruta C:/ directamente desde el Mac; "
-        "primero transfiere el api_log* con AnyDesk."
+        "[POS LOG] Python no puede leer directamente el disco del equipo remoto; "
+        "primero transfiere el api_log_*.txt con RustDesk."
     )
     print(
         "[POS LOG] Descargalo en una carpeta local llamada "
-        f"{EXPECTED_SOURCE_FOLDER_NAME}, por ejemplo: {DEFAULT_SOURCE_DIR}"
+        f"{RUSTDESK_DROP_FOLDER_NAME}, por ejemplo: {DEFAULT_SOURCE_DIR}"
     )
 
 
@@ -113,7 +119,7 @@ def find_latest_run_folder(evidence_root=None):
     run_folders = [
         path
         for path in evidence_root.glob("run_*")
-        if path.is_dir()
+        if path.is_dir() and re.match(r"^run_\d{8}(?:_\d{6})?", path.name)
     ]
 
     if not run_folders:
@@ -238,7 +244,7 @@ def parse_args():
         "--source-dir",
         default=None,
         help=(
-            "Carpeta local espejo donde AnyDesk descargo el log remoto de "
+            "Carpeta local donde RustDesk descargo el log remoto de "
             f"{EXPECTED_REMOTE_SOURCE_DIR}. "
             f"Default: {DEFAULT_SOURCE_DIR}."
         ),

@@ -8,6 +8,7 @@ from screenshot import save_screenshot
 
 
 PAYMENT_RESULT_TIMEOUT_SECONDS = 120
+PAYMENT_SCREEN_TIMEOUT_SECONDS = 45
 
 
 def click_asset(image_name, timeout=10):
@@ -40,7 +41,11 @@ def handle_benefits_or_payment(current_state=None):
     if state == "no_benefits":
         click_asset("no_benefits_button.png", timeout=10)
 
-        assert_image_visible("card.png", confidence=0.80, timeout=10)
+        assert_image_visible(
+            "card.png",
+            confidence=0.80,
+            timeout=PAYMENT_SCREEN_TIMEOUT_SECONDS,
+        )
 
         save_screenshot("step_4_no_benefits_clicked")
 

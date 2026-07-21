@@ -25,16 +25,19 @@ SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
 
 _CURRENT_STAGE = None
 _CURRENT_CASE = None
+_SCREENSHOT_SEQUENCE = 0
 
 
 def start_run(run_id=None):
     global RUN_ID, RUN_FOLDER, SCREENSHOTS_FOLDER, _CURRENT_STAGE, _CURRENT_CASE
+    global _SCREENSHOT_SEQUENCE
 
     RUN_ID = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     RUN_FOLDER = Path(__file__).resolve().parent / "Evidencias" / f"run_{RUN_ID}"
     SCREENSHOTS_FOLDER = RUN_FOLDER / "screenshots"
     _CURRENT_STAGE = None
     _CURRENT_CASE = None
+    _SCREENSHOT_SEQUENCE = 0
 
     return RUN_FOLDER
 
@@ -50,9 +53,12 @@ def set_screenshot_case(case_id):
 
 
 def save_screenshot(name):
+    global _SCREENSHOT_SEQUENCE
+
+    _SCREENSHOT_SEQUENCE += 1
     SCREENSHOTS_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    prefix_parts = []
+    prefix_parts = [f"{_SCREENSHOT_SEQUENCE:03d}"]
     if _CURRENT_CASE:
         prefix_parts.append(_CURRENT_CASE)
     if _CURRENT_STAGE:

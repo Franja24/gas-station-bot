@@ -61,6 +61,54 @@ if features_package is not None:
 
 
 class MagnaAmountPaymentFlowTests(unittest.TestCase):
+    @patch("features.magna_amount_payment.save_screenshot")
+    @patch("features.magna_amount_payment.is_visible")
+    def test_waits_for_payment_success_before_approving(
+        self,
+        is_visible_mock,
+        save_screenshot_mock,
+    ):
+        is_visible_mock.side_effect = [False, False, False, True]
+
+        self.assertEqual(
+            magna_amount_payment.wait_for_approved_payment(timeout=5),
+            "approved",
+        )
+
+        self.assertEqual(
+            is_visible_mock.call_args_list,
+            [
+                call("payment_success.png", confidence=0.80, timeout=1),
+                call("dispatch_instructions_title.png", confidence=0.80, timeout=1),
+                call("payment_declined_title.png", confidence=0.80, timeout=1),
+                call("payment_success.png", confidence=0.80, timeout=1),
+            ],
+        )
+        save_screenshot_mock.assert_called_once_with(
+            "payment_approved_before_opening_pump_simulator"
+        )
+
+    @patch("features.magna_amount_payment.time.sleep")
+    @patch("features.magna_amount_payment.save_screenshot")
+    @patch("features.magna_amount_payment.is_visible")
+    def test_accepts_only_stable_dispatch_instructions(
+        self,
+        is_visible_mock,
+        save_screenshot_mock,
+        sleep_mock,
+    ):
+        is_visible_mock.side_effect = [False, True, True]
+
+        self.assertEqual(
+            magna_amount_payment.wait_for_approved_payment(timeout=5),
+            "approved",
+        )
+
+        sleep_mock.assert_called_once_with(3)
+        save_screenshot_mock.assert_called_once_with(
+            "dispatch_instructions_stable_before_opening_pump_simulator"
+        )
+
     @patch("features.magna_amount_payment.handle_benefits_or_payment")
     @patch("features.magna_amount_payment.handle_payment_result")
     @patch("features.magna_amount_payment.wait_for_benefits_or_payment")

@@ -70,6 +70,7 @@ class ReportTests(unittest.TestCase):
                     "screenshot",
                     return_value=image,
                 ),
+                patch.object(screenshot, "_SCREENSHOT_SEQUENCE", 0),
             ):
                 screenshot.set_screenshot_case(None)
                 screenshot.set_screenshot_stage("02_premium")
@@ -78,7 +79,7 @@ class ReportTests(unittest.TestCase):
 
         self.assertEqual(
             screenshot_path.name,
-            "02_premium__anydesk_opened.png",
+            "001__02_premium__anydesk_opened.png",
         )
         image.save.assert_called_once()
 
@@ -99,6 +100,7 @@ class ReportTests(unittest.TestCase):
                     "screenshot",
                     return_value=image,
                 ),
+                patch.object(screenshot, "_SCREENSHOT_SEQUENCE", 0),
             ):
                 screenshot.set_screenshot_case("TC01_normal_magna_1250")
                 screenshot.set_screenshot_stage("00_prepare_product_selection")
@@ -108,7 +110,7 @@ class ReportTests(unittest.TestCase):
 
         self.assertEqual(
             screenshot_path.name,
-            "TC01_normal_magna_1250__00_prepare_product_selection__ready.png",
+            "001__TC01_normal_magna_1250__00_prepare_product_selection__ready.png",
         )
         image.save.assert_called_once()
 

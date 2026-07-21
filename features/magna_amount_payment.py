@@ -124,16 +124,29 @@ def wait_for_approved_payment(timeout=120):
     start_time = time.monotonic()
 
     while time.monotonic() - start_time < timeout:
-        if (
-            is_visible("payment_success.png", confidence=0.80, timeout=1)
-            or is_visible(
+        if is_visible("payment_success.png", confidence=0.80, timeout=1):
+            save_screenshot("payment_approved_before_opening_pump_simulator")
+            return "approved"
+
+        if is_visible(
+            "dispatch_instructions_title.png",
+            confidence=0.80,
+            timeout=1,
+        ):
+            print(
+                "[PAYMENT] Instrucciones de despacho visibles; "
+                "confirmando estado estable"
+            )
+            time.sleep(3)
+            if is_visible(
                 "dispatch_instructions_title.png",
                 confidence=0.80,
                 timeout=1,
-            )
-        ):
-            save_screenshot("payment_approved_before_opening_pump_simulator")
-            return "approved"
+            ):
+                save_screenshot(
+                    "dispatch_instructions_stable_before_opening_pump_simulator"
+                )
+                return "approved"
 
         if is_visible("payment_declined_title.png", confidence=0.80, timeout=1):
             assert_image_visible(

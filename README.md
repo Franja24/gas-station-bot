@@ -162,6 +162,33 @@ El proceso devuelve código `0` para `PASSED` y código `1` para `FAILED`.
 las validaciones funcionales configuradas. El caso de login ya verifica que
 aparezca `premium.png` después de iniciar.
 
+### Anexar el api_log descargado por RustDesk
+
+En RustDesk, recibe el archivo remoto `api_log_YYYY-MM-DD.txt` dentro de:
+
+```text
+C:\Users\CESAR FRANK VL\api_log_drop
+```
+
+El nombre no está fijo en el código. El colector obtiene la fecha desde la
+carpeta `run_YYYYMMDD...`, busca `api_log_YYYY-MM-DD.txt` y lo copia al último
+reporte real, ignorando carpetas de diagnóstico:
+
+```powershell
+.\.venv\Scripts\python.exe pos_log_collector.py
+```
+
+Para anexarlo automáticamente durante la generación de reportes Behave cuando
+el archivo ya se encuentra en `api_log_drop`:
+
+```powershell
+$env:POS_LOG_AFTER_RUN='1'
+.\.venv\Scripts\behave.exe features\kiosk_close_suite.feature --no-capture
+```
+
+También se puede sobrescribir la fecha esperada, el origen o el patrón con
+`POS_LOG_EXPECTED_DATE`, `POS_LOG_SOURCE_DIR` y `POS_LOG_PATTERN`.
+
 Para agregar una validación funcional a otro caso:
 
 ```python
