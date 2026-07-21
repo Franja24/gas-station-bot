@@ -8,7 +8,7 @@ from features.windows_app_hang_up_validate import focus_pump_simulator
 from screenshot import save_screenshot
 
 
-def run():
+def unhook_hose():
     print("Cambiando a WindowsApp")
     # STEP 1 - OPEN WINDOWS APP
 
@@ -22,16 +22,22 @@ def run():
 
     pyautogui.press("d")   # Descolgar
 
-    time.sleep(1)
+    print("[PUMP SIMULATOR] Esperando 8 segundos despues de D")
+    time.sleep(8)
 
     save_screenshot("pump_simulator_descolgar_executed")
 
+
+def start_fuel_dispensing():
+    print("[PUMP SIMULATOR] Presionando G para iniciar el surtimiento")
     pyautogui.press("g")   # Gatillo
 
     time.sleep(30)
 
     save_screenshot("pump_simulator_gatilo_executed")
 
+
+def return_to_kiosk_and_close():
     # STEP 4 - RETURN RUSTDESK
 
     print("Cambiando a RustDesk")
@@ -45,3 +51,9 @@ def run():
     force_close_kiosk_process()
 
     save_screenshot("step_3_kiosk_closed_once")
+
+
+def run():
+    unhook_hose()
+    start_fuel_dispensing()
+    return_to_kiosk_and_close()

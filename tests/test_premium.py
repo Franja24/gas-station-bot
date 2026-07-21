@@ -31,7 +31,7 @@ class PremiumFlowTests(unittest.TestCase):
         assert_image_visible_mock.assert_called_once_with(
             "card.png",
             confidence=0.80,
-            timeout=10,
+            timeout=premium.PAYMENT_SCREEN_TIMEOUT_SECONDS,
         )
         save_screenshot_mock.assert_called_once_with(
             "step_4_no_benefits_clicked"

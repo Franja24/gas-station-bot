@@ -1,4 +1,5 @@
 import time
+import pyautogui
 from features.applications import open_anydesk
 from features.platform_profile import use_windows_path
 from clicker import ClickError, assert_image_visible, click_coordinates, click_image
@@ -42,6 +43,7 @@ LOGIN_KEYPAD_OFFSETS = (
     else MAC_LOGIN_KEYPAD_OFFSETS
 )
 PASSWORD_FIELD_OFFSET = (115, -15) if use_windows_path() else (172, -28)
+EMPLOYEE_FIELD_OFFSET = (-115, -15) if use_windows_path() else (-172, -28)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -126,6 +128,15 @@ def click_password_field(form_location):
     click_coordinates(x, y)
 
 
+def clear_login_field(form_location, field_offset):
+    offset_x, offset_y = field_offset
+    x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
+    y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
+    click_coordinates(x, y)
+    pyautogui.hotkey("ctrl", "a")
+    pyautogui.press("backspace")
+
+
 def enter_login_digits(value, keypad_centers):
     for digit in value:
         x, y = keypad_centers[digit]
@@ -133,6 +144,31 @@ def enter_login_digits(value, keypad_centers):
         click_coordinates(x, y)
 
         time.sleep(1)
+
+
+def submit_login_and_wait_for_employee_action(max_attempts=2):
+    for attempt in range(1, max_attempts + 1):
+        click_asset("entry_button.png")
+        time.sleep(2)
+
+        if find_login_form(timeout=1) is not None:
+            print(
+                f"[LOGIN] El formulario sigue visible despues de Ingresar "
+                f"({attempt}/{max_attempts})"
+            )
+            continue
+
+        for image_name in (
+            "activate_unit_button.png",
+            "continue_session_button.png",
+        ):
+            if find_asset(image_name, timeout=8) is not None:
+                return image_name
+
+    raise ClickError(
+        "El formulario de login no se cerro o no aparecio Activar Unidad ni "
+        "Continuar Sesion."
+    )
 
 
 def open_login_form(max_attempts=3):
@@ -173,11 +209,14 @@ def run():
     keypad_centers = get_login_keypad_centers(form_location)
 
     # STEP  2 SCREEN LOGIN
+    clear_login_field(form_location, EMPLOYEE_FIELD_OFFSET)
     enter_login_digits(EMPLOYEE_ID, keypad_centers)
 
     #  campo de texto password
 
     click_password_field(form_location)
+    pyautogui.hotkey("ctrl", "a")
+    pyautogui.press("backspace")
 
     time.sleep(1)
 
@@ -188,23 +227,7 @@ def run():
 
     # STEP  3  LOGIN_BUTTON
 
-    click_asset("entry_button.png")
-
-    employee_action = None
-
-    for image_name in (
-        "activate_unit_button.png",
-        "continue_session_button.png",
-    ):
-        if find_asset(image_name, timeout=8) is not None:
-            employee_action = image_name
-            break
-
-    if employee_action is None:
-        raise ClickError(
-            "Login exitoso, pero no aparecio Activar Unidad ni "
-            "Continuar Sesion."
-        )
+    employee_action = submit_login_and_wait_for_employee_action()
 
     save_screenshot("03_entry button")
 

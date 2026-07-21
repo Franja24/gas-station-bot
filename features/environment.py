@@ -4,6 +4,10 @@ from datetime import datetime
 
 import screenshot
 from excel_report import generate_excel_report
+from pos_log_collector import (
+    copy_latest_pos_log_to_run_folder,
+    is_pos_log_after_run_enabled,
+)
 
 
 def _scenario_slug(scenario):
@@ -29,8 +33,18 @@ def before_scenario(context, scenario):
     context.behave_background_stages = []
     context.behave_test_cases = []
     context.behave_error = None
+    context.behave_step_sequence = 0
 
     print(f"[BEHAVE] Evidencia: {screenshot.RUN_FOLDER.resolve()}")
+
+
+def before_step(context, step):
+    context.behave_step_sequence = getattr(context, "behave_step_sequence", 0) + 1
+    keyword = re.sub(r"[^A-Za-z0-9]+", "_", step.keyword).strip("_").lower()
+    name = re.sub(r"[^A-Za-z0-9]+", "_", step.name).strip("_").lower()
+    screenshot.set_screenshot_stage(
+        f"{context.behave_step_sequence:02d}_{keyword}_{name}"
+    )
 
 
 def after_scenario(context, scenario):
@@ -45,6 +59,7 @@ def after_scenario(context, scenario):
 
     if status != "PASSED":
         try:
+            screenshot.set_screenshot_stage("99_scenario_result")
             screenshot.save_screenshot("FAILED_error")
         except Exception as screenshot_error:
             print(f"[WARN] No se pudo guardar captura del fallo: {screenshot_error}")
@@ -67,6 +82,17 @@ def after_scenario(context, scenario):
         ),
     }
 
+    if is_pos_log_after_run_enabled():
+        try:
+            copied_log = copy_latest_pos_log_to_run_folder(
+                run_folder=screenshot.RUN_FOLDER,
+            )
+            if copied_log is not None:
+                result["pos_log"] = copied_log.name
+        except Exception as log_error:
+            print(f"[WARN] No se pudo anexar el log POS: {log_error}")
+
     screenshot.save_result(result)
     generate_excel_report(result, screenshot.RUN_FOLDER, screenshot.RUN_ID)
     screenshot.generate_pdf_report(result)
+    screenshot.set_screenshot_stage(None)
