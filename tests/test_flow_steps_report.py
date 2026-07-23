@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from features.steps import flow_steps
 
@@ -147,6 +147,47 @@ class FlowStepsReportTests(unittest.TestCase):
         self.assertEqual(
             context.behave_test_cases[0]["stages"][1]["status"],
             "PENDING_HUMAN",
+        )
+
+    def test_sevenly_qr_assisted_checkpoint_runs_live_flow(self):
+        context = SimpleNamespace(
+            table=[
+                {
+                    "case_id": "CP_7LY_002",
+                    "checkpoint": "Login 7LY QR Luis",
+                    "bot_scope": "Navegación QR",
+                    "human_scope": "Presentar QR de Luis",
+                }
+            ],
+            behave_test_cases=[],
+            behave_stages=[],
+        )
+        stages = [
+            {
+                "name": "02_validate_qr_error_luis",
+                "status": "PASSED",
+                "duration_seconds": 1,
+            }
+        ]
+
+        with (
+            patch.dict(
+                flow_steps.ASSISTED_FLOW_RUNNERS,
+                {"sevenly_qr_luis": unittest.mock.Mock(return_value={"stages": stages})},
+                clear=False,
+            ),
+            patch.object(flow_steps.screenshot, "set_screenshot_case") as case_mock,
+        ):
+            flow_steps.step_register_assisted_checkpoints(context)
+
+        self.assertEqual(context.behave_test_cases[0]["id"], "CP_7LY_002")
+        self.assertEqual(context.behave_test_cases[0]["status"], "ASSISTED")
+        self.assertEqual(context.behave_test_cases[0]["stages"], stages)
+        case_mock.assert_has_calls(
+            [
+                call("CP_7LY_002_sevenly_qr_luis"),
+                call(None),
+            ]
         )
 
 

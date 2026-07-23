@@ -59,6 +59,8 @@ def launch_kiosk_from_run_dialog():
 
 def is_kiosk_ready(timeout=3):
     ready_assets = (
+        "pump_out_of_service_title.png",
+        "login_form_anchor.png",
         "login_button.png",
         "start.png",
         "iniciar.png",
@@ -67,10 +69,21 @@ def is_kiosk_ready(timeout=3):
         "magna.png",
         "amount_1250.png",
     )
-    for asset in ready_assets:
-        if find_image(asset, confidence=0.80, timeout=timeout) is not None:
-            print(f"[OK] Kiosko listo con asset: {asset}")
-            return True
+    started_at = time.monotonic()
+    while time.monotonic() - started_at < timeout:
+        for asset in ready_assets:
+            remaining = timeout - (time.monotonic() - started_at)
+            if remaining <= 0:
+                return False
+
+            if find_image(
+                asset,
+                confidence=0.80,
+                timeout=min(1, remaining),
+                confirmations=1,
+            ) is not None:
+                print(f"[OK] Kiosko listo con asset: {asset}")
+                return True
     return False
 
 

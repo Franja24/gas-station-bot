@@ -158,7 +158,16 @@ def _activate_matching_windows_window(app_key):
         time.sleep(0.3)
         remote_window.restore()
         time.sleep(0.5)
-        remote_window.activate()
+        try:
+            remote_window.activate()
+        except Exception as retry_exc:
+            center_x = remote_window.left + remote_window.width // 2
+            center_y = remote_window.top + remote_window.height // 2
+            print(
+                f"[WARN] Activación restaurada falló: {retry_exc}. "
+                f"Enfocando por clic en x={center_x}, y={center_y}."
+            )
+            click_coordinates(center_x, center_y)
     time.sleep(1)
     save_screenshot("rustdesk_remote_window_opened")
     print(f"[OK] RustDesk sesion activa en Windows: {remote_window.title}")

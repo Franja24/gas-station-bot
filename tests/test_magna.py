@@ -5,6 +5,11 @@ from features import magna
 
 
 class MagnaFlowTests(unittest.TestCase):
+    @patch("features.magna.handle_payment_result")
+    @patch(
+        "features.magna.wait_for_payment_result",
+        return_value="ready_for_dispatch",
+    )
     @patch("features.magna.handle_benefits_or_payment")
     @patch("features.magna.wait_for_benefits_or_payment")
     @patch("features.magna.assert_image_visible")
@@ -19,6 +24,8 @@ class MagnaFlowTests(unittest.TestCase):
         assert_image_visible_mock,
         wait_for_benefits_or_payment_mock,
         handle_benefits_or_payment_mock,
+        wait_for_payment_result_mock,
+        handle_payment_result_mock,
     ):
         wait_for_benefits_or_payment_mock.return_value = "no_benefits"
 
@@ -59,11 +66,6 @@ class MagnaFlowTests(unittest.TestCase):
             [
                 call("amount_1250.png", confidence=0.80, timeout=10),
                 call("continue_button.png", confidence=0.80, timeout=10),
-                call(
-                    "payment_success.png",
-                    confidence=0.80,
-                    timeout=30,
-                ),
             ],
         )
         self.assertNotIn(
@@ -72,6 +74,8 @@ class MagnaFlowTests(unittest.TestCase):
         )
         wait_for_benefits_or_payment_mock.assert_called_once_with()
         handle_benefits_or_payment_mock.assert_called_once_with("no_benefits")
+        wait_for_payment_result_mock.assert_called_once_with(timeout=30)
+        handle_payment_result_mock.assert_called_once_with("ready_for_dispatch")
 
 
 if __name__ == "__main__":

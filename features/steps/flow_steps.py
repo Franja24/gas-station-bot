@@ -69,6 +69,11 @@ FLOW_RUNNERS = {
     "login": module_runner("login"),
     "login error": module_runner("login_error"),
     "login_error": module_runner("login_error"),
+    "login_inactive_error": module_runner(
+        "login_error",
+        employee_id="999999",
+        password="123456",
+    ),
     "lt_e2e": module_runner("lt_e2e"),
     "magna": module_runner("magna"),
     "normal_magna_continue": module_runner("normal_magna_continue"),
@@ -76,6 +81,7 @@ FLOW_RUNNERS = {
     "open kiosco": module_runner("open_kiosco"),
     "open_kiosco": module_runner("open_kiosco"),
     "premium": module_runner("premium"),
+    "premium_ready": module_runner("premium_ready"),
     "premium_close_app": module_runner("premium_close_app"),
     "print": module_runner("print"),
     "sevenly": module_runner("sevenly"),
@@ -96,6 +102,24 @@ FLOW_RUNNERS = {
     "windows_app_clos": module_runner("windows_app_close"),
     "windows_app_close_hung_up": module_runner("windows_app_close_hung_up"),
     "windows_app_hang_up": module_runner("windows_app_hang_up"),
+}
+
+
+ASSISTED_FLOW_RUNNERS = {
+    "change_employee_assisted": module_runner(
+        "change_employee_assisted",
+        iterations=4,
+    ),
+    "sevenly_qr_luis": module_runner(
+        "sevenly_qr_assisted",
+        person_name="Luis",
+        first_case=True,
+    ),
+    "sevenly_qr_sachin": module_runner(
+        "sevenly_qr_assisted",
+        person_name="Sachin",
+        first_case=False,
+    ),
 }
 
 
@@ -228,8 +252,11 @@ def run_flow(context, flow_name, case_id=None, case_name=None):
 def step_workspace_ready(context):
     if not hasattr(context, "remote_desktop_app"):
         from features.applications import REMOTE_DESKTOP_APP_ENV, use_remote_desktop
+        from features.platform_profile import use_windows_path
 
-        use_remote_desktop(os.environ.get(REMOTE_DESKTOP_APP_ENV, "AnyDesk"))
+        configured_app = os.environ.get(REMOTE_DESKTOP_APP_ENV)
+        default_app = "RustDesk" if use_windows_path() else "AnyDesk"
+        use_remote_desktop(configured_app or default_app)
 
     context.last_flow = None
     context.completed_flows = []
@@ -292,11 +319,56 @@ def step_register_assisted_checkpoints(context):
         checkpoint = table_value(row, "checkpoint", case_id)
         bot_scope = table_value(row, "bot_scope", "Evidencia visual y navegación")
         human_scope = table_value(row, "human_scope", "Validación humana requerida")
+        flow_name = table_value(row, "flow") or {
+            "CP_AV_007": "change_employee_assisted",
+            "CP_7LY_002": "sevenly_qr_luis",
+            "CP_7LY_003": "sevenly_qr_sachin",
+        }.get(case_id)
         started_at = datetime.now()
+        start_time = time.monotonic()
 
         context.expected_assisted_checkpoints.append(case_id)
         if not hasattr(context, "behave_test_cases"):
             context.behave_test_cases = []
+
+        stages = None
+        if flow_name:
+            normalized_flow = normalize_flow_name(flow_name)
+            if normalized_flow not in ASSISTED_FLOW_RUNNERS:
+                available_flows = ", ".join(sorted(ASSISTED_FLOW_RUNNERS))
+                raise ValueError(
+                    f"Flujo asistido no soportado: {flow_name}. "
+                    f"Disponibles: {available_flows}"
+                )
+
+            screenshot.set_screenshot_case(f"{case_id}_{normalized_flow}")
+            print(f"[BEHAVE] Ejecutando flujo asistido: {normalized_flow}")
+            try:
+                returned_details = ASSISTED_FLOW_RUNNERS[normalized_flow]()
+                stages = returned_details.get("stages", [])
+                context.behave_stages.extend(stages)
+            except Exception as exc:
+                stages = getattr(exc, "stages", [])
+                context.behave_stages.extend(stages)
+                context.behave_error = f"{type(exc).__name__}: {exc}"
+                context.behave_test_cases.append(
+                    {
+                        "id": case_id,
+                        "name": checkpoint,
+                        "flow": "bot_humano",
+                        "status": "FAILED",
+                        "started_at": started_at.isoformat(timespec="seconds"),
+                        "duration_seconds": round(
+                            time.monotonic() - start_time,
+                            2,
+                        ),
+                        "error": context.behave_error,
+                        "stages": stages,
+                    }
+                )
+                raise
+            finally:
+                screenshot.set_screenshot_case(None)
 
         context.behave_test_cases.append(
             {
@@ -305,9 +377,9 @@ def step_register_assisted_checkpoints(context):
                 "flow": "bot_humano",
                 "status": "ASSISTED",
                 "started_at": started_at.isoformat(timespec="seconds"),
-                "duration_seconds": 0,
+                "duration_seconds": round(time.monotonic() - start_time, 2),
                 "error": None,
-                "stages": [
+                "stages": stages or [
                     {
                         "name": "bot_scope",
                         "status": "ASSISTED",

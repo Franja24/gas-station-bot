@@ -8,6 +8,34 @@ WINDOWS_ALIASES = {
         "login_form_anchor.png",
     ],
     "entry_button.png": ["entry_button_windows.png", "entry_button.png"],
+    "use_rfid_button.png": [
+        "use_rfid_button_windows.png",
+        "use_rfid_button.png",
+    ],
+    "sevenly_qr_option.png": [
+        "sevenly_qr_option_windows.png",
+        "sevenly_qr_option.png",
+    ],
+    "sevenly_qr_waiting.png": [
+        "sevenly_qr_waiting_windows.png",
+        "sevenly_qr_waiting.png",
+    ],
+    "sevenly_qr_scanner.png": [
+        "sevenly_qr_scanner_windows.png",
+        "sevenly_qr_scanner.png",
+    ],
+    "change_employee_title.png": [
+        "change_employee_title_windows.png",
+        "change_employee_title.png",
+    ],
+    "change_employee_activate_button.png": [
+        "change_employee_activate_button_windows.png",
+        "change_employee_activate_button.png",
+    ],
+    "activate_unit_button.png": [
+        "activate_unit_button_windows.png",
+        "activate_unit_button.png",
+    ],
     "login_error.png": ["login_error_windows.png", "login_error.png"],
     "user_field.png": ["user_field_windows.png", "user_field.png"],
     "pass_field.png": ["pass_field_windows.png", "pass_field.png"],
@@ -55,8 +83,28 @@ WINDOWS_ALIASES = {
         "continue_button.png",
         "continue_amount_button.png",
     ],
-    "start.png": ["start.png"],
-    "iniciar.png": ["start.png"],
+    "no_benefits_button.png": [
+        "no_benefits_button_windows.png",
+        "no_benefits_button.png",
+    ],
+    "regresar_button.png": [
+        "regresar_button_windows.png",
+        "regresar_button.png",
+    ],
+    "declined_response_eye_button.png": [
+        "declined_response_eye_button_windows.png",
+        "declined_response_eye_button.png",
+    ],
+    "metadata_response_title.png": [
+        "metadata_response_title_windows.png",
+        "metadata_response_title.png",
+    ],
+    "metadata_close_button.png": [
+        "metadata_close_button_windows.png",
+        "metadata_close_button.png",
+    ],
+    "start.png": ["start_windows.png", "start.png"],
+    "iniciar.png": ["start_windows.png", "start.png"],
 }
 
 

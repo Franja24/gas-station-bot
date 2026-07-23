@@ -93,6 +93,30 @@ class PremiumFlowTests(unittest.TestCase):
             ],
         )
 
+    @patch(
+        "features.premium.time.monotonic",
+        side_effect=[0, 1, 2, 6],
+    )
+    @patch("features.premium.time.sleep")
+    @patch("features.premium.find_image")
+    def test_waits_six_seconds_before_dispatching(
+        self,
+        find_image_mock,
+        sleep_mock,
+        _monotonic_mock,
+    ):
+        find_image_mock.side_effect = [
+            None,
+            None,
+            SimpleNamespace(x=100, y=100),
+        ]
+
+        self.assertEqual(
+            premium.wait_for_payment_result(timeout=10),
+            "ready_for_dispatch",
+        )
+        sleep_mock.assert_called_once_with(4)
+
     @patch("features.premium.save_screenshot")
     def test_handle_payment_result_keeps_success_flow(
         self,
@@ -109,18 +133,20 @@ class PremiumFlowTests(unittest.TestCase):
             ],
         )
 
+    @patch("features.premium.save_screenshot")
     @patch("features.premium.payment_declined_response_run")
-    def test_handle_payment_result_validates_declined_response_and_fails_case(
+    def test_handle_payment_result_validates_declined_response_and_routes_case(
         self,
         payment_declined_response_run_mock,
+        save_screenshot_mock,
     ):
-        with self.assertRaisesRegex(
-            ClickError,
-            "Pago declinado; se validó la metadata",
-        ):
-            premium.handle_payment_result("declined")
+        result = premium.handle_payment_result("declined")
 
+        self.assertEqual(result, "declined")
         payment_declined_response_run_mock.assert_called_once_with(open_app=False)
+        save_screenshot_mock.assert_called_once_with(
+            "payment_declined_log_review_completed"
+        )
 
 
 if __name__ == "__main__":

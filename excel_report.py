@@ -63,6 +63,16 @@ def _split_datetime(value):
     return day, time
 
 
+def _format_duration(value):
+    try:
+        total_seconds = max(0, int(round(float(value or 0))))
+    except (TypeError, ValueError):
+        total_seconds = 0
+
+    minutes, seconds = divmod(total_seconds, 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
+
 def _case_description(case):
     failed_stage = next(
         (
@@ -232,14 +242,19 @@ def _sheet_xml(result):
             ["Limpiezas", f"{auxiliary_passed} / {auxiliary_failed}"],
             style_id=4,
         ),
-        _row_xml(8, REPORT_HEADERS, style_id=1),
+        _row_xml(
+            8,
+            ["Tiempo", _format_duration(result.get("duration_seconds"))],
+            style_id=4,
+        ),
+        _row_xml(9, REPORT_HEADERS, style_id=1),
     ]
 
-    for offset, row in enumerate(rows, start=9):
+    for offset, row in enumerate(rows, start=10):
         style_id = 3 if row[2] == "PASSED" else 2 if row[2] == "FAILED" else None
         sheet_rows.append(_row_xml(offset, row, style_id=style_id, row_height=48))
 
-    last_row = 8 + len(rows)
+    last_row = 9 + len(rows)
 
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -247,8 +262,8 @@ def _sheet_xml(result):
   <dimension ref="A1:F{last_row}"/>
   <sheetViews>
     <sheetView workbookViewId="0">
-      <pane ySplit="8" topLeftCell="A9" activePane="bottomLeft" state="frozen"/>
-      <selection pane="bottomLeft" activeCell="A9" sqref="A9"/>
+      <pane ySplit="9" topLeftCell="A10" activePane="bottomLeft" state="frozen"/>
+      <selection pane="bottomLeft" activeCell="A10" sqref="A10"/>
     </sheetView>
   </sheetViews>
   <cols>
@@ -262,7 +277,7 @@ def _sheet_xml(result):
   <sheetData>
     {"".join(sheet_rows)}
   </sheetData>
-  <autoFilter ref="A8:F{last_row}"/>
+  <autoFilter ref="A9:F{last_row}"/>
 </worksheet>"""
 
 

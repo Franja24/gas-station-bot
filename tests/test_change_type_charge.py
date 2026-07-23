@@ -15,7 +15,9 @@ applications_stub.open_anydesk = lambda: None
 
 premium_stub = types.ModuleType("features.premium")
 premium_stub.handle_benefits_or_payment = lambda *args, **kwargs: None
+premium_stub.handle_payment_result = lambda state: state
 premium_stub.wait_for_benefits_or_payment = lambda *args, **kwargs: "payment"
+premium_stub.wait_for_payment_result = lambda *args, **kwargs: "ready_for_dispatch"
 
 screenshot_stub = types.ModuleType("screenshot")
 screenshot_stub.save_screenshot = lambda *args, **kwargs: None
@@ -54,6 +56,11 @@ if features_package is not None:
 
 
 class ChangeTypeChargeFlowTests(unittest.TestCase):
+    @patch("features.change_type_charge.handle_payment_result")
+    @patch(
+        "features.change_type_charge.wait_for_payment_result",
+        return_value="ready_for_dispatch",
+    )
     @patch("features.change_type_charge.handle_benefits_or_payment")
     @patch("features.change_type_charge.wait_for_benefits_or_payment")
     @patch("features.change_type_charge.assert_image_visible")
@@ -70,6 +77,8 @@ class ChangeTypeChargeFlowTests(unittest.TestCase):
         assert_image_visible_mock,
         wait_for_benefits_or_payment_mock,
         handle_benefits_or_payment_mock,
+        wait_for_payment_result_mock,
+        handle_payment_result_mock,
     ):
         wait_for_benefits_or_payment_mock.return_value = "payment"
 
@@ -135,15 +144,12 @@ class ChangeTypeChargeFlowTests(unittest.TestCase):
                 call("amount_1250.png", confidence=0.80, timeout=10),
                 call("continue_button.png", confidence=0.80, timeout=10),
                 call("continue_button.png", confidence=0.80, timeout=10),
-                call(
-                    "payment_success.png",
-                    confidence=0.80,
-                    timeout=30,
-                ),
             ],
         )
         wait_for_benefits_or_payment_mock.assert_called_once_with()
         handle_benefits_or_payment_mock.assert_called_once_with("payment")
+        wait_for_payment_result_mock.assert_called_once_with(timeout=30)
+        handle_payment_result_mock.assert_called_once_with("ready_for_dispatch")
 
     @patch("features.change_type_charge.click_image")
     def test_asset_click_falls_back_to_calibrated_coordinates(

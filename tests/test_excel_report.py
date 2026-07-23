@@ -62,6 +62,7 @@ class ExcelReportTests(unittest.TestCase):
             "case_name": "Run migrated happy path from Behave",
             "status": "PASSED",
             "started_at": "2026-07-02T17:09:24",
+            "duration_seconds": 255.31,
             "test_cases": [
                 {
                     "id": "TC01",
@@ -111,6 +112,8 @@ class ExcelReportTests(unittest.TestCase):
         self.assertIn("normal_magna_1250", sheet_xml)
         self.assertIn("00_prepare_product_selection", sheet_xml)
         self.assertIn("Stage ejecutado correctamente.", sheet_xml)
+        self.assertIn("Tiempo", sheet_xml)
+        self.assertIn("04:15", sheet_xml)
 
 
 if __name__ == "__main__":

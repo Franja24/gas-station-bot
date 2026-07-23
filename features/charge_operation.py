@@ -19,6 +19,9 @@ from features.windows_app import run as windows_run
 from screenshot import save_screenshot
 
 
+PAYMENT_STATE = None
+
+
 SUPPORTED_PRODUCTS = {
     "magna": "magna.png",
     "premium": "premium.png",
@@ -143,6 +146,8 @@ def select_charge(charge_type):
 
 
 def complete_card_payment():
+    global PAYMENT_STATE
+
     click_asset("continue_button.png", timeout=10)
 
     benefits_state = wait_for_benefits_or_payment()
@@ -153,12 +158,20 @@ def complete_card_payment():
     click_asset("card.png", timeout=10)
     save_screenshot("charge_operation_wait_payment")
 
-    payment_state = wait_for_payment_result(timeout=30)
-    handle_payment_result(payment_state)
-    save_screenshot(f"charge_operation_payment_{payment_state}")
+    PAYMENT_STATE = wait_for_payment_result(timeout=30)
+    handle_payment_result(PAYMENT_STATE)
+    save_screenshot(f"charge_operation_payment_{PAYMENT_STATE}")
+    return PAYMENT_STATE
 
 
 def finalize_dispatch():
+    if PAYMENT_STATE == "declined":
+        print(
+            "[CHARGE] Pago declinado y log consultado; "
+            "se omite simulador 108 y finalización aprobada."
+        )
+        return "declined"
+
     windows_run()
     open_anydesk()
     finalize_visible_purchase_summary()
@@ -181,6 +194,9 @@ def validate_options(product, charge_type):
 
 
 def run(product="magna", charge_type="amount_1250", use_sevenly=False):
+    global PAYMENT_STATE
+    PAYMENT_STATE = None
+
     validate_options(product, charge_type)
 
     stages = [("00_prepare_product_selection", prepare_product_selection)]

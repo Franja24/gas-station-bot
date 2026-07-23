@@ -1,7 +1,8 @@
 import time
 import pyautogui
-from features.applications import open_anydesk
 from features.platform_profile import use_windows_path
+from features.open_kiosco_ready import run as open_kiosco_ready_run
+from features.out_of_service import is_out_of_service_visible
 from clicker import ClickError, assert_image_visible, click_coordinates, click_image
 from config.settings import SCREENSHOT_TO_MOUSE_SCALE
 from detector import find_image
@@ -44,6 +45,7 @@ LOGIN_KEYPAD_OFFSETS = (
 )
 PASSWORD_FIELD_OFFSET = (115, -15) if use_windows_path() else (172, -28)
 EMPLOYEE_FIELD_OFFSET = (-115, -15) if use_windows_path() else (-172, -28)
+WINDOWS_BACKSPACE_OFFSET = (207, 193)
 
 
 def click_asset(image_name, timeout=10, region=None):
@@ -57,7 +59,17 @@ def click_asset(image_name, timeout=10, region=None):
 
 
 def find_login_form(timeout=10):
-    return find_image("login_form_anchor.png", timeout=timeout)
+    location = find_image("login_form_anchor.png", timeout=timeout)
+    if location is not None:
+        return location
+
+    if use_windows_path():
+        entry_location = find_image("entry_button.png", timeout=timeout)
+        if entry_location is not None:
+            print("[LOGIN] Formulario lleno detectado mediante Ingresar")
+            return pyautogui.Point(entry_location.x, entry_location.y - 236)
+
+    return None
 
 
 def find_asset(image_name, timeout=2):
@@ -65,6 +77,11 @@ def find_asset(image_name, timeout=2):
 
 
 def continue_if_already_authenticated():
+    if is_out_of_service_visible(timeout=2):
+        print("[LOGIN] Empleado autenticado; bomba fuera de servicio")
+        save_screenshot("00_login_authenticated_out_of_service")
+        return True
+
     if find_asset("premium.png", timeout=2) is not None:
         print("[LOGIN] Selección de combustible ya visible")
         return True
@@ -133,6 +150,24 @@ def clear_login_field(form_location, field_offset):
     x = int((form_location.x + offset_x) * SCREENSHOT_TO_MOUSE_SCALE)
     y = int((form_location.y + offset_y) * SCREENSHOT_TO_MOUSE_SCALE)
     click_coordinates(x, y)
+
+    if use_windows_path():
+        backspace_x = int(
+            (form_location.x + WINDOWS_BACKSPACE_OFFSET[0])
+            * SCREENSHOT_TO_MOUSE_SCALE
+        )
+        backspace_y = int(
+            (form_location.y + WINDOWS_BACKSPACE_OFFSET[1])
+            * SCREENSHOT_TO_MOUSE_SCALE
+        )
+        print(
+            f"[KEYPAD MODE] Limpiando campo con retroceso "
+            f"x={backspace_x}, y={backspace_y}"
+        )
+        pyautogui.click(backspace_x, backspace_y, clicks=20, interval=0.08)
+        time.sleep(0.5)
+        return
+
     pyautogui.hotkey("ctrl", "a")
     pyautogui.press("backspace")
 
@@ -197,7 +232,7 @@ def run():
 
     print("Cambiando a AnyDesk")
 
-    open_anydesk()
+    open_kiosco_ready_run()
 
     if continue_if_already_authenticated():
         return
@@ -214,11 +249,7 @@ def run():
 
     #  campo de texto password
 
-    click_password_field(form_location)
-    pyautogui.hotkey("ctrl", "a")
-    pyautogui.press("backspace")
-
-    time.sleep(1)
+    clear_login_field(form_location, PASSWORD_FIELD_OFFSET)
 
     # INGRESA PASSWORD
     enter_login_digits(PASSWORD, keypad_centers)
@@ -239,6 +270,11 @@ def run():
         if find_asset("premium.png", timeout=5) is not None:
             save_screenshot("04_continue_session_product_selection")
             return
+
+    if is_out_of_service_visible(timeout=15):
+        print("[LOGIN] Autenticacion correcta; bomba fuera de servicio")
+        save_screenshot("04_activate_unit_out_of_service")
+        return
 
     assert_image_visible("start.png", confidence=0.80, timeout=15)
 

@@ -4,14 +4,15 @@ Feature: PetroSeven matrix coverage
   @petroseven_matrix_automated
   Scenario: Run matrix checkpoints already covered by bot flows
     Given the automation workspace is ready
+    And the kiosk application is open and ready
     When I run these flows
       | case_id    | flow               | checkpoint                                                             |
-      | CP_7LY_001 | benefits           | Inicio de sesión por teléfono de lealtad                               |
-      | CP_AV_001  | login              | Inicio de sesión por credenciales estándar para empleado               |
       | CP_AV_002  | login_error        | Bloqueo de login con contraseña errónea                                |
-      | CP_AV_003  | login_error        | Bloqueo de login con empleado inexistente o inactivo                   |
+      | CP_AV_003  | login_inactive_error | Bloqueo de login con empleado inexistente o inactivo                 |
+      | CP_AV_001  | login              | Inicio de sesión por credenciales estándar para empleado               |
+      | CP_7LY_001 | benefits           | Inicio de sesión por teléfono de lealtad                               |
       | CP_AV_009  | windows_app        | Consulta de estado de surtidor con apoyo de simulador                  |
-      | CP_AV_010  | premium            | Catálogo por bomba y selección de producto                             |
+      | CP_AV_010  | premium_ready      | Catálogo por bomba y selección de producto                             |
       | CP_AV_012  | change_type_charge | Envío de solicitud por volumen/monto                                   |
       | CP_KON_001 | invoice            | Generación de factura con validación externa pendiente                 |
       | CP_KIOS_001 | premium           | Venta sin inicio por lealtad                                           |
@@ -32,7 +33,9 @@ Feature: PetroSeven matrix coverage
       | CP_AV_004   | Inicio de sesión por RFID para empleado              | Evidencia visual de login/menú             | Lectura RFID física y respuesta Avalon           |
       | CP_AV_005   | Login con RFID no válida o inactiva                  | Evidencia visual de error                  | Presentar tarjeta física no válida               |
       | CP_AV_006   | Cierre de sesión para empleado por RFID              | Evidencia visual de retorno a login        | Escaneo RFID/cierre físico                       |
-      | CP_AV_007   | Cambio de empleado                                   | Evidencia visual de transición de empleado | Validación humana del cambio de empleado         |
+      | CP_AV_007   | Cambio de empleado (4 tarjetas)                      | Ciclo activar/activar unidad con evidencia | Presentar tarjetas de empleados 7, 6, 5 y 8      |
+      | CP_7LY_002  | Login 7LY QR Luis                                    | Navegación QR y evidencia del error        | Presentar QR de Luis al escáner                   |
+      | CP_7LY_003  | Login 7LY QR Sachin                                  | Reintento QR y evidencia del error         | Presentar QR de Sachin al escáner                 |
       | CP_AV_016   | Funcionalidad de RFC                                 | Navegación/captura en facturación          | Validar datos devueltos por Avalon               |
       | CP_AV_017   | Rechazo por RFC inexistente o inactivo               | Navegación/captura en facturación          | Validar respuesta negativa de Avalon             |
       | CP_KIOS_005 | Cancelación de operación en PinPad                   | Evidencia visual antes/después             | Cancelación física en PinPad                     |

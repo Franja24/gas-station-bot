@@ -9,6 +9,8 @@ from screenshot import save_screenshot
 
 PAYMENT_RESULT_TIMEOUT_SECONDS = 120
 PAYMENT_SCREEN_TIMEOUT_SECONDS = 45
+DISPATCH_MIN_WAIT_SECONDS = 6
+DISPATCH_FAST_WINDOW_SECONDS = 7
 
 
 def click_asset(image_name, timeout=10):
@@ -76,6 +78,23 @@ def wait_for_payment_result(timeout=PAYMENT_RESULT_TIMEOUT_SECONDS):
             "bank_terminal_instructions_title.png",
             timeout=1,
         ) is not None:
+            elapsed = time.monotonic() - start_time
+            remaining_wait = max(0, DISPATCH_MIN_WAIT_SECONDS - elapsed)
+            if remaining_wait:
+                time.sleep(remaining_wait)
+
+            elapsed = time.monotonic() - start_time
+            if elapsed <= DISPATCH_FAST_WINDOW_SECONDS:
+                print(
+                    "[PAYMENT] Instrucciones visibles dentro de la ventana "
+                    f"{DISPATCH_MIN_WAIT_SECONDS}-{DISPATCH_FAST_WINDOW_SECONDS}s; "
+                    "cambiando al simulador."
+                )
+            else:
+                print(
+                    "[PAYMENT] Instrucciones visibles después de "
+                    f"{elapsed:.1f}s; cambiando al simulador."
+                )
             return "ready_for_dispatch"
 
     raise ClickError(
@@ -91,18 +110,21 @@ def handle_payment_result(current_state=None):
         save_screenshot("step_5.1_complete_payment")
         save_screenshot("step_6_payment_success")
         save_screenshot("instructions pumb server")
-        return
+        return state
 
     if state == "ready_for_dispatch":
         save_screenshot("step_5.1_terminal_ready")
         save_screenshot("instructions_pump_server")
-        return
+        return state
 
     if state == "declined":
         payment_declined_response_run(open_app=False)
-        raise ClickError(
-            "Pago declinado; se validó la metadata de respuesta del declinado."
+        save_screenshot("payment_declined_log_review_completed")
+        print(
+            "[PAYMENT] Pago declinado; se consultó la respuesta en "
+            "Ajustes > Registro de transacciones."
         )
+        return state
 
     raise ClickError(
         "Resultado de pago desconocido: "
@@ -145,4 +167,4 @@ def run():
 
     save_screenshot("step_5_wait_payment")
 
-    handle_payment_result(wait_for_payment_result())
+    return handle_payment_result(wait_for_payment_result())

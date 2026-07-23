@@ -44,6 +44,23 @@ class ChargeOperationTests(unittest.TestCase):
             "charge_operation_payment_ready_for_dispatch"
         )
 
+    @patch("features.charge_operation.finalize_visible_purchase_summary")
+    @patch("features.charge_operation.open_anydesk")
+    @patch("features.charge_operation.windows_run")
+    def test_declined_payment_skips_pump_simulator(
+        self,
+        windows_run_mock,
+        open_anydesk_mock,
+        finalize_mock,
+    ):
+        charge_operation.PAYMENT_STATE = "declined"
+
+        self.assertEqual(charge_operation.finalize_dispatch(), "declined")
+
+        windows_run_mock.assert_not_called()
+        open_anydesk_mock.assert_not_called()
+        finalize_mock.assert_not_called()
+
     @patch("features.charge_operation.run_stages")
     def test_runs_three_stage_groups_without_sevenly(self, run_stages_mock):
         expected_result = {"stages": []}
